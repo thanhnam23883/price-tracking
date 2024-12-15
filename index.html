@@ -101,6 +101,7 @@
         <p>Theo dõi sự thay đổi giá của xe Honda, Yamaha, xe nhập khẩu và xe 50cc</p>
     </header>
 
+    <!-- Đăng nhập -->
     <div class="login" id="loginForm">
         <h2>Đăng nhập</h2>
         <input type="password" id="password" placeholder="Nhập mật khẩu">
@@ -108,13 +109,13 @@
         <p id="loginError" style="color: red; display: none;">Mật khẩu sai, vui lòng thử lại!</p>
     </div>
 
+    <!-- Nội dung chính -->
     <main>
         <div class="add-price">
             <h2>Thêm hoặc Cập nhật Giá</h2>
             <form id="priceForm">
                 <label for="category">Loại xe:</label>
-                <select id="category" name="category" required>
-                    <option value="All">Tất cả</option>
+                <select id="category" required>
                     <option value="Honda">Honda</option>
                     <option value="Yamaha">Yamaha</option>
                     <option value="Nhập khẩu">Nhập khẩu</option>
@@ -122,13 +123,13 @@
                 </select>
 
                 <label for="model">Mẫu xe:</label>
-                <input type="text" id="model" name="model" required placeholder="Tên mẫu xe">
+                <input type="text" id="model" placeholder="Tên mẫu xe" required>
 
                 <label for="supplier">Nhà cung cấp:</label>
-                <input type="text" id="supplier" name="supplier" required placeholder="Nhà cung cấp">
+                <input type="text" id="supplier" placeholder="Nhà cung cấp" required>
 
                 <label for="price">Giá (VND):</label>
-                <input type="number" id="price" name="price" required placeholder="Nhập giá">
+                <input type="number" id="price" placeholder="Nhập giá" required>
 
                 <button type="button" onclick="addOrUpdatePrice()">Xác nhận</button>
             </form>
@@ -141,23 +142,21 @@
                     <th>Loại xe</th>
                     <th>Mẫu xe</th>
                     <th>Nhà cung cấp</th>
-                    <th>Giá hiện tại (VND)</th>
-                    <th>Cập nhật lần cuối</th>
+                    <th>Giá (VND)</th>
+                    <th>Thời gian cập nhật</th>
                 </tr>
             </thead>
-            <tbody id="priceList">
-                <!-- Dòng dữ liệu sẽ được thêm động tại đây -->
-            </tbody>
+            <tbody id="priceList"></tbody>
         </table>
 
-        <button onclick="logout()" style="margin-top: 20px;">Đăng xuất</button>
+        <button onclick="logout()">Đăng xuất</button>
     </main>
 
     <footer>
         &copy; 2024 Hệ thống nội bộ - Theo dõi giá xe máy
     </footer>
 
-    <!-- Firebase SDK phiên bản 8 -->
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
@@ -173,92 +172,72 @@
             appId: "1:446135891476:web:56874fe4a386631d2dd901"
         };
 
-        // Khởi tạo Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // Hàm kiểm tra đăng nhập
+        // Kiểm tra đăng nhập
         function checkLogin() {
-            const inputPassword = document.getElementById('password').value;
-            if (inputPassword === "123456") { // Mật khẩu đúng
-                localStorage.setItem('savedPassword', inputPassword);
+            const password = document.getElementById('password').value;
+            if (password === "123456") {
+                localStorage.setItem('loggedIn', 'true');
                 document.getElementById('loginForm').style.display = 'none';
                 document.querySelector('main').style.display = 'block';
+                loadPrices();
             } else {
                 document.getElementById('loginError').style.display = 'block';
             }
         }
 
-        // Hàm đăng xuất
+        // Đăng xuất
         function logout() {
-            localStorage.removeItem('savedPassword');
+            localStorage.removeItem('loggedIn');
             location.reload();
         }
 
-        // Hàm thêm hoặc cập nhật giá
+        // Thêm hoặc cập nhật giá
         function addOrUpdatePrice() {
-            const category = document.getElementById('category').value.trim();
-            const model = document.getElementById('model').value.trim();
-            const supplier = document.getElementById('supplier').value.trim();
-            const price = document.getElementById('price').value.trim();
+            const category = document.getElementById('category').value;
+            const model = document.getElementById('model').value;
+            const supplier = document.getElementById('supplier').value;
+            const price = document.getElementById('price').value;
             const timestamp = new Date().toLocaleString();
 
-            if (!category || !model || !price || !supplier) {
-                alert('Vui lòng điền đầy đủ thông tin!');
-                return;
-            }
-
-            const priceData = {
-                category,
-                model,
-                supplier,
-                price,
-                timestamp
-            };
-
-            database.ref('prices/' + model).set(priceData)
-                .then(() => {
-                    alert('Dữ liệu đã được lưu thành công!');
-                    updatePriceList();
-                })
-                .catch((error) => {
-                    console.error('Lỗi khi lưu dữ liệu:', error);
-                    alert('Không thể lưu dữ liệu. Kiểm tra lại cấu hình Firebase!');
+            if (category && model && supplier && price) {
+                database.ref('prices/' + model).set({
+                    category, model, supplier, price, timestamp
+                }).then(() => {
+                    alert('Dữ liệu đã được lưu!');
+                    loadPrices();
                 });
+            }
         }
 
-        // Cập nhật danh sách giá
-        function updatePriceList() {
-            database.ref('prices').on('value', (snapshot) => {
-                const data = snapshot.val();
-                const tableBody = document.getElementById('priceList');
-                tableBody.innerHTML = '';
-
-                if (!data) {
-                    tableBody.innerHTML = '<tr><td colspan="5">Không có dữ liệu</td></tr>';
-                    return;
-                }
-
-                for (let key in data) {
-                    const row = `<tr>
-                        <td>${data[key].category}</td>
-                        <td>${data[key].model}</td>
-                        <td>${data[key].supplier}</td>
-                        <td>${data[key].price}</td>
-                        <td>${data[key].timestamp}</td>
-                    </tr>`;
-                    tableBody.innerHTML += row;
-                }
+        // Tải danh sách giá
+        function loadPrices() {
+            database.ref('prices').once('value', (snapshot) => {
+                const priceList = document.getElementById('priceList');
+                priceList.innerHTML = '';
+                snapshot.forEach((childSnapshot) => {
+                    const data = childSnapshot.val();
+                    priceList.innerHTML += `
+                        <tr>
+                            <td>${data.category}</td>
+                            <td>${data.model}</td>
+                            <td>${data.supplier}</td>
+                            <td>${data.price}</td>
+                            <td>${data.timestamp}</td>
+                        </tr>
+                    `;
+                });
             });
         }
 
         // Kiểm tra trạng thái đăng nhập
         document.addEventListener('DOMContentLoaded', () => {
-            const savedPassword = localStorage.getItem('savedPassword');
-            if (savedPassword === "123456") {
+            if (localStorage.getItem('loggedIn') === 'true') {
                 document.getElementById('loginForm').style.display = 'none';
                 document.querySelector('main').style.display = 'block';
-                updatePriceList();
+                loadPrices();
             }
         });
     </script>
