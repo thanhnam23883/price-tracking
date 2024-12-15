@@ -165,6 +165,8 @@
                 <!-- Lịch sử giá sẽ được thêm động tại đây -->
             </tbody>
         </table>
+
+        <button onclick="logout()" style="margin-top: 20px;">Đăng xuất</button>
     </main>
 
     <footer>
@@ -173,7 +175,6 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-analytics.js"></script>
     <script>
         // Firebase configuration
         const firebaseConfig = {
@@ -183,19 +184,27 @@
             projectId: "price-tracking-2d330",
             storageBucket: "price-tracking-2d330.appspot.com",
             messagingSenderId: "446135891476",
-            appId: "1:446135891476:web:56874fe4a386631d2dd901",
-            measurementId: "G-VZV4VRD7WP"
+            appId: "1:446135891476:web:56874fe4a386631d2dd901"
         };
 
         // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database(app);
 
+        // Kiểm tra trạng thái đăng nhập khi tải lại trang
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedPassword = localStorage.getItem('savedPassword');
+            if (savedPassword === "123456") { // Mật khẩu đúng
+                document.getElementById('loginForm').style.display = 'none';
+                document.querySelector('main').style.display = 'block';
+            }
+        });
+
+        // Hàm kiểm tra đăng nhập
         function checkLogin() {
             const inputPassword = document.getElementById('password').value;
-            const savedPassword = localStorage.getItem('savedPassword');
 
-            if (savedPassword === inputPassword || inputPassword === "123456") {
+            if (inputPassword === "123456") { // Kiểm tra mật khẩu
                 localStorage.setItem('savedPassword', inputPassword);
                 document.getElementById('loginForm').style.display = 'none';
                 document.querySelector('main').style.display = 'block';
@@ -204,11 +213,13 @@
             }
         }
 
+        // Hàm đăng xuất
         function logout() {
-            localStorage.removeItem('savedPassword');
-            location.reload();
+            localStorage.removeItem('savedPassword'); // Xóa trạng thái đăng nhập
+            location.reload(); // Tải lại trang
         }
 
+        // Hàm thêm hoặc cập nhật giá
         function addOrUpdatePrice() {
             const category = document.getElementById('category').value;
             const model = document.getElementById('model').value;
@@ -233,6 +244,7 @@
             alert('Dữ liệu đã được lưu!');
         }
 
+        // Hàm hiển thị danh sách giá
         firebase.database().ref('prices').on('value', (snapshot) => {
             const data = snapshot.val();
             const tableBody = document.getElementById('priceList');
@@ -252,3 +264,4 @@
     </script>
 </body>
 </html>
+
