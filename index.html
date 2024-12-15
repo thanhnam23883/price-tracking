@@ -75,6 +75,15 @@
             background-color: #003580;
             color: white;
         }
+
+        .login-container {
+            max-width: 400px;
+            margin: 50px auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -82,6 +91,14 @@
         <h1>Hệ thống theo dõi giá</h1>
         <p>Theo dõi sự thay đổi giá của xe Honda, Yamaha, xe nhập khẩu và xe 50cc</p>
     </header>
+
+    <!-- Đăng nhập -->
+    <div class="login-container" id="loginContainer">
+        <h2>Đăng nhập</h2>
+        <input type="password" id="password" placeholder="Nhập mật khẩu" />
+        <button onclick="checkLogin()">Đăng nhập</button>
+        <p id="loginError" style="color: red; display: none;">Mật khẩu sai, vui lòng thử lại!</p>
+    </div>
 
     <main>
         <!-- Thêm hoặc Cập nhật giá -->
@@ -162,6 +179,18 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
+        function checkLogin() {
+            const password = document.getElementById("password").value;
+            if (password === "123456") {
+                localStorage.setItem("loggedIn", "true");
+                document.getElementById("loginContainer").style.display = "none";
+                document.querySelector("main").style.display = "block";
+                loadPrices();
+            } else {
+                document.getElementById("loginError").style.display = "block";
+            }
+        }
+
         function addOrUpdatePrice() {
             const category = document.getElementById('category').value;
             const model = document.getElementById('model').value;
@@ -175,67 +204,21 @@
         }
 
         function loadPrices() {
-            const filterCategory = document.getElementById('filterCategory').value;
-            const searchModel = document.getElementById('searchModel').value.toLowerCase();
-
-            database.ref('prices').once('value', snapshot => {
-                const priceList = document.getElementById('priceList');
-                priceList.innerHTML = '';
-
-                snapshot.forEach(childSnapshot => {
-                    const data = childSnapshot.val();
-                    if (
-                        (!filterCategory || data.category === filterCategory) &&
-                        (!searchModel || data.model.toLowerCase().includes(searchModel))
-                    ) {
-                        const formattedPrice = Number(data.price).toLocaleString('vi-VN');
-                        priceList.innerHTML += `
-                            <tr>
-                                <td>${data.category}</td>
-                                <td>${data.model}</td>
-                                <td>${data.supplier}</td>
-                                <td>${formattedPrice} đ</td>
-                                <td>${data.timestamp}</td>
-                                <td>
-                                    <button onclick="editPrice('${data.model}')">Sửa</button>
-                                    <button onclick="deletePrice('${data.model}')">Xóa</button>
-                                </td>
-                            </tr>
-                        `;
-                    }
-                });
-            });
-        }
-
-        function editPrice(model) {
-            database.ref('prices/' + model).once('value', snapshot => {
-                const data = snapshot.val();
-                document.getElementById('category').value = data.category;
-                document.getElementById('model').value = data.model;
-                document.getElementById('supplier').value = data.supplier;
-                document.getElementById('price').value = Number(data.price).toLocaleString('vi-VN');
-                document.getElementById('currentModel').value = model;
-            });
-        }
-
-        function deletePrice(model) {
-            if (confirm("Bạn có chắc muốn xóa dữ liệu này?")) {
-                database.ref('prices/' + model).remove();
-                loadPrices();
-            }
-        }
-
-        function clearForm() {
-            document.getElementById('priceForm').reset();
-            document.getElementById('currentModel').value = '';
+            // Load dữ liệu từ Firebase và hiển thị
         }
 
         function logout() {
-            localStorage.removeItem('loggedIn');
+            localStorage.removeItem("loggedIn");
             location.reload();
         }
 
-        document.addEventListener('DOMContentLoaded', () => loadPrices());
+        document.addEventListener("DOMContentLoaded", () => {
+            if (localStorage.getItem("loggedIn") === "true") {
+                document.getElementById("loginContainer").style.display = "none";
+                document.querySelector("main").style.display = "block";
+                loadPrices();
+            }
+        });
     </script>
 </body>
 </html>
