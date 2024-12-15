@@ -31,14 +31,11 @@
             margin-top: 20px;
         }
 
-        table,
-        th,
-        td {
+        table, th, td {
             border: 1px solid #ddd;
         }
 
-        th,
-        td {
+        th, td {
             padding: 10px;
             text-align: left;
         }
@@ -48,8 +45,7 @@
             color: white;
         }
 
-        .form-section,
-        .filter-section {
+        .form-section, .filter-section {
             background: #fff;
             padding: 15px;
             margin-bottom: 20px;
@@ -69,6 +65,20 @@
             background-color: #0056b3;
         }
 
+        .login {
+            display: flex;
+            flex-direction: column;
+            max-width: 300px;
+            margin: 50px auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .login input {
+            padding: 10px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 
@@ -78,13 +88,18 @@
         <p>Theo dõi sự thay đổi giá của xe Honda, Yamaha, xe nhập khẩu và xe 50cc</p>
     </header>
 
+    <!-- Phần Đăng nhập -->
+    <div id="login" class="login">
+        <h2>Đăng nhập</h2>
+        <input type="password" id="password" placeholder="Nhập mật khẩu">
+        <button onclick="checkLogin()">Đăng nhập</button>
+        <p id="errorMessage" style="color: red; display: none;">Sai mật khẩu. Vui lòng thử lại!</p>
+    </div>
+
+    <!-- Nội dung chính -->
     <main>
-        <!-- Thêm hoặc Cập nhật Giá -->
         <div class="form-section">
             <h2>Thêm hoặc Cập nhật Giá</h2>
-
-            <input type="hidden" id="currentModel" value="">
-
             <label>Loại xe:</label>
             <select id="category">
                 <option value="Honda">Honda</option>
@@ -92,23 +107,17 @@
                 <option value="Nhập khẩu">Nhập khẩu</option>
                 <option value="50cc">50cc</option>
             </select>
-
             <label>Mẫu xe:</label>
             <input type="text" id="model" placeholder="Tên mẫu xe" required>
-
             <label>Nhà cung cấp:</label>
             <input type="text" id="supplier" placeholder="Nhà cung cấp" required>
-
             <label>Giá (VND):</label>
             <input type="text" id="price" placeholder="Nhập giá" required>
-
             <button onclick="addOrUpdatePrice()">Xác nhận</button>
         </div>
 
-        <!-- Lọc và Tìm kiếm -->
         <div class="filter-section">
             <h2>Lọc và Tìm kiếm</h2>
-
             <label>Loại xe:</label>
             <select id="filterCategory">
                 <option value="">Tất cả</option>
@@ -117,16 +126,12 @@
                 <option value="Nhập khẩu">Nhập khẩu</option>
                 <option value="50cc">50cc</option>
             </select>
-
             <label>Tìm mẫu xe:</label>
             <input type="text" id="searchModel" placeholder="Nhập tên mẫu xe">
-
             <button onclick="loadPrices()">Lọc</button>
         </div>
 
-        <!-- Danh sách giá -->
         <h2>Danh sách giá</h2>
-
         <table>
             <thead>
                 <tr>
@@ -148,105 +153,39 @@
         &copy; 2024 Hệ thống nội bộ - Theo dõi giá xe máy
     </footer>
 
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyDjMUhIAq4kXgHoN3MAvlCif9C3fDvGLcA",
-            authDomain: "price-tracking-2d330.firebaseapp.com",
-            databaseURL: "https://price-tracking-2d330-default-rtdb.firebaseio.com",
-            projectId: "price-tracking-2d330",
-            storageBucket: "price-tracking-2d330.appspot.com",
-            messagingSenderId: "446135891476",
-            appId: "1:446135891476:web:56874fe4a386631d2dd901"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-
-        function addOrUpdatePrice() {
-            const category = document.getElementById('category').value;
-            const model = document.getElementById('model').value;
-            const supplier = document.getElementById('supplier').value;
-            const price = document.getElementById('price').value.replace(/\D/g, '');
-            const timestamp = new Date().toLocaleString();
-
-            if (model) {
-                database.ref('prices/' + model).set({
-                    category, model, supplier, price, timestamp
-                });
+        function checkLogin() {
+            const password = document.getElementById('password').value;
+            if (password === "123456") {
+                localStorage.setItem('loggedIn', 'true');
+                document.getElementById('login').style.display = 'none';
+                document.querySelector('main').style.display = 'block';
                 loadPrices();
-                clearForm();
+            } else {
+                document.getElementById('errorMessage').style.display = 'block';
             }
-        }
-
-        function loadPrices() {
-            const filterCategory = document.getElementById('filterCategory').value;
-            const searchModel = document.getElementById('searchModel').value.toLowerCase();
-
-            database.ref('prices').once('value', snapshot => {
-                const priceList = document.getElementById('priceList');
-                priceList.innerHTML = '';
-
-                snapshot.forEach(childSnapshot => {
-                    const data = childSnapshot.val();
-
-                    if (
-                        (!filterCategory || data.category === filterCategory) &&
-                        (!searchModel || data.model.toLowerCase().includes(searchModel))
-                    ) {
-                        const formattedPrice = Number(data.price).toLocaleString('vi-VN');
-                        priceList.innerHTML += `
-                            <tr>
-                                <td>${data.category}</td>
-                                <td>${data.model}</td>
-                                <td>${data.supplier}</td>
-                                <td>${formattedPrice} đ</td>
-                                <td>${data.timestamp}</td>
-                                <td>
-                                    <button onclick="editPrice('${data.model}')">Sửa</button>
-                                    <button onclick="deletePrice('${data.model}')">Xóa</button>
-                                </td>
-                            </tr>
-                        `;
-                    }
-                });
-            });
-        }
-
-        function editPrice(model) {
-            database.ref('prices/' + model).once('value', snapshot => {
-                const data = snapshot.val();
-
-                document.getElementById('category').value = data.category;
-                document.getElementById('model').value = data.model;
-                document.getElementById('supplier').value = data.supplier;
-                document.getElementById('price').value = Number(data.price).toLocaleString('vi-VN');
-            });
-        }
-
-        function deletePrice(model) {
-            if (confirm("Bạn có chắc muốn xóa dữ liệu này?")) {
-                database.ref('prices/' + model).remove();
-                loadPrices();
-            }
-        }
-
-        function clearForm() {
-            document.getElementById('priceForm').reset();
         }
 
         function logout() {
-            alert("Đăng xuất thành công!");
+            localStorage.removeItem('loggedIn');
             location.reload();
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            document.querySelector('main').style.display = 'block';
-            loadPrices();
+            if (localStorage.getItem('loggedIn') === 'true') {
+                document.getElementById('login').style.display = 'none';
+                document.querySelector('main').style.display = 'block';
+                loadPrices();
+            }
         });
+
+        function loadPrices() {
+            document.getElementById('priceList').innerHTML = '<tr><td colspan="6">Đây là nơi hiển thị dữ liệu từ Firebase...</td></tr>';
+        }
+
+        function addOrUpdatePrice() {
+            alert("Thêm hoặc cập nhật dữ liệu (mô phỏng)");
+        }
     </script>
 </body>
 
