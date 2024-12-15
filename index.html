@@ -173,19 +173,23 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-analytics.js"></script>
     <script>
+        // Firebase configuration
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            databaseURL: "YOUR_DATABASE_URL",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyDjMUhIAq4kXgHoN3MAvlCif9C3fDvGLcA",
+            authDomain: "price-tracking-2d330.firebaseapp.com",
+            databaseURL: "https://price-tracking-2d330-default-rtdb.firebaseio.com",
+            projectId: "price-tracking-2d330",
+            storageBucket: "price-tracking-2d330.appspot.com",
+            messagingSenderId: "446135891476",
+            appId: "1:446135891476:web:56874fe4a386631d2dd901",
+            measurementId: "G-VZV4VRD7WP"
         };
 
+        // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        const database = firebase.database(app);
 
         function checkLogin() {
             const inputPassword = document.getElementById('password').value;
