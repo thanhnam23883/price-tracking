@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,46 +11,38 @@
             margin: 0;
             padding: 0;
         }
-
         header {
             background-color: #003580;
             color: white;
             padding: 10px;
             text-align: center;
         }
-
         main {
             padding: 20px;
             display: none;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
         }
-
         table, th, td {
             border: 1px solid #ddd;
         }
-
         th, td {
             padding: 10px;
             text-align: left;
         }
-
         th {
             background-color: #003580;
             color: white;
         }
-
         .form-section, .filter-section {
             background: #fff;
             padding: 15px;
             margin-bottom: 20px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-
         button {
             background-color: #003580;
             color: white;
@@ -60,24 +51,21 @@
             cursor: pointer;
             margin-right: 5px;
         }
-
         button:hover {
             background-color: #0056b3;
         }
-
         .login {
-            display: flex;
-            flex-direction: column;
             max-width: 300px;
             margin: 50px auto;
             background: white;
             padding: 20px;
+            text-align: center;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-
         .login input {
-            padding: 10px;
+            width: 100%;
             margin-bottom: 10px;
+            padding: 10px;
         }
     </style>
 </head>
@@ -88,7 +76,7 @@
         <p>Theo dõi sự thay đổi giá của xe Honda, Yamaha, xe nhập khẩu và xe 50cc</p>
     </header>
 
-    <!-- Phần Đăng nhập -->
+    <!-- Đăng nhập -->
     <div id="login" class="login">
         <h2>Đăng nhập</h2>
         <input type="password" id="password" placeholder="Nhập mật khẩu">
@@ -140,7 +128,6 @@
                     <th>Nhà cung cấp</th>
                     <th>Giá (VND)</th>
                     <th>Thời gian cập nhật</th>
-                    <th>Hành động</th>
                 </tr>
             </thead>
             <tbody id="priceList"></tbody>
@@ -149,11 +136,23 @@
         <button onclick="logout()">Đăng xuất</button>
     </main>
 
-    <footer>
-        &copy; 2024 Hệ thống nội bộ - Theo dõi giá xe máy
-    </footer>
-
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDjMUhIAq4kXgHoN3MAvlCif9C3fDvGLcA",
+            authDomain: "price-tracking-2d330.firebaseapp.com",
+            databaseURL: "https://price-tracking-2d330-default-rtdb.firebaseio.com",
+            projectId: "price-tracking-2d330",
+            storageBucket: "price-tracking-2d330.appspot.com",
+            messagingSenderId: "446135891476",
+            appId: "1:446135891476:web:56874fe4a386631d2dd901"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
         function checkLogin() {
             const password = document.getElementById('password').value;
             if (password === "123456") {
@@ -166,14 +165,27 @@
             }
         }
 
-        function logout() {
-            localStorage.removeItem('loggedIn'); // Xóa trạng thái đăng nhập
-            window.location.reload(); // Tải lại trang để quay về trạng thái ban đầu
+        function loadPrices() {
+            database.ref('prices').on('value', snapshot => {
+                const priceList = document.getElementById('priceList');
+                priceList.innerHTML = ''; // Xóa dữ liệu cũ
+                snapshot.forEach(childSnapshot => {
+                    const data = childSnapshot.val();
+                    priceList.innerHTML += `
+                        <tr>
+                            <td>${data.category}</td>
+                            <td>${data.model}</td>
+                            <td>${data.supplier}</td>
+                            <td>${Number(data.price).toLocaleString('vi-VN')} đ</td>
+                            <td>${data.timestamp}</td>
+                        </tr>`;
+                });
+            });
         }
 
-        function loadPrices() {
-            document.getElementById('priceList').innerHTML = `
-                <tr><td colspan="6">Dữ liệu giá sẽ được hiển thị tại đây.</td></tr>`;
+        function logout() {
+            localStorage.removeItem('loggedIn');
+            window.location.reload();
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -185,5 +197,4 @@
         });
     </script>
 </body>
-
 </html>
