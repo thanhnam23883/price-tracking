@@ -221,28 +221,35 @@
 
         // Hàm thêm hoặc cập nhật giá
         function addOrUpdatePrice() {
-            const category = document.getElementById('category').value;
-            const model = document.getElementById('model').value;
-            const supplier = document.getElementById('supplier').value;
-            const price = document.getElementById('price').value;
-            const timestamp = new Date().toLocaleString();
+    const category = document.getElementById('category').value.trim();
+    const model = document.getElementById('model').value.trim();
+    const supplier = document.getElementById('supplier').value.trim();
+    const price = document.getElementById('price').value.trim();
+    const timestamp = new Date().toLocaleString();
 
-            if (!category || !model || !price || !supplier) {
-                alert('Vui lòng điền đầy đủ thông tin!');
-                return;
-            }
+    if (!category || !model || !price || !supplier) {
+        alert('Vui lòng điền đầy đủ thông tin!');
+        return;
+    }
 
-            const priceData = {
-                category,
-                model,
-                supplier,
-                price,
-                timestamp
-            };
+    const priceData = {
+        category,
+        model,
+        supplier,
+        price,
+        timestamp
+    };
 
-            firebase.database().ref('prices/' + model).set(priceData);
-            alert('Dữ liệu đã được lưu!');
-        }
+    // Ghi dữ liệu vào Firebase
+    firebase.database().ref('prices/' + model).set(priceData)
+        .then(() => {
+            alert('Dữ liệu đã được lưu thành công!');
+        })
+        .catch((error) => {
+            console.error('Lỗi khi lưu dữ liệu:', error);
+            alert('Không thể lưu dữ liệu. Vui lòng thử lại!');
+        });
+}
 
         // Hàm hiển thị danh sách giá
         firebase.database().ref('prices').on('value', (snapshot) => {
