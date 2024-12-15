@@ -166,22 +166,47 @@
         }
 
         function loadPrices() {
-            database.ref('prices').on('value', snapshot => {
-                const priceList = document.getElementById('priceList');
-                priceList.innerHTML = ''; // Xóa dữ liệu cũ
+            const filterCategory = document.getElementById('filterCategory').value;
+            const searchModel = document.getElementById('searchModel').value.toLowerCase();
+            const priceList = document.getElementById('priceList');
+
+            database.ref('prices').once('value', snapshot => {
+                priceList.innerHTML = ''; // Xóa dữ liệu cũ trước khi load
+
+                if (!snapshot.exists()) {
+                    priceList.innerHTML = '<tr><td colspan="6" style="text-align:center;">Không có dữ liệu hiển thị!</td></tr>';
+                    return;
+                }
+
                 snapshot.forEach(childSnapshot => {
                     const data = childSnapshot.val();
-                    priceList.innerHTML += `
-                        <tr>
-                            <td>${data.category}</td>
-                            <td>${data.model}</td>
-                            <td>${data.supplier}</td>
-                            <td>${Number(data.price).toLocaleString('vi-VN')} đ</td>
-                            <td>${data.timestamp}</td>
-                        </tr>`;
+
+                    if (
+                        (!filterCategory || data.category === filterCategory) &&
+                        (!searchModel || data.model.toLowerCase().includes(searchModel))
+                    ) {
+                        const formattedPrice = Number(data.price).toLocaleString('vi-VN');
+                        priceList.innerHTML += `
+                            <tr>
+                                <td>${data.category}</td>
+                                <td>${data.model}</td>
+                                <td>${data.supplier}</td>
+                                <td>${formattedPrice} đ</td>
+                                <td>${data.timestamp}</td>
+                                <td>
+                                    <button onclick="editPrice('${data.model}')">Sửa</button>
+                                    <button onclick="deletePrice('${data.model}')">Xóa</button>
+                                </td>
+                            </tr>
+                        `;
+                    }
                 });
-            });
-        }
+    }).catch(error => {
+        console.error("Lỗi khi đọc dữ liệu từ Firebase: ", error);
+        priceList.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Lỗi kết nối Firebase!</td></tr>';
+    });
+}
+
 
         function logout() {
             localStorage.removeItem('loggedIn');
