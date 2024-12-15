@@ -221,54 +221,68 @@
 
         // Hàm thêm hoặc cập nhật giá
         function addOrUpdatePrice() {
-    const category = document.getElementById('category').value.trim();
-    const model = document.getElementById('model').value.trim();
-    const supplier = document.getElementById('supplier').value.trim();
-    const price = document.getElementById('price').value.trim();
-    const timestamp = new Date().toLocaleString();
+            const category = document.getElementById('category').value.trim();
+            const model = document.getElementById('model').value.trim();
+            const supplier = document.getElementById('supplier').value.trim();
+            const price = document.getElementById('price').value.trim();
+            const timestamp = new Date().toLocaleString();
 
-    if (!category || !model || !price || !supplier) {
-        alert('Vui lòng điền đầy đủ thông tin!');
-        return;
-    }
+            if (!category || !model || !price || !supplier) {
+                alert('Vui lòng điền đầy đủ thông tin!');
+                return;
+            }
 
-    const priceData = {
-        category,
-        model,
-        supplier,
-        price,
-        timestamp
-    };
+            const priceData = {
+                category,
+                model,
+                supplier,
+                price,
+                timestamp
+            };
 
-    // Ghi dữ liệu vào Firebase
-    firebase.database().ref('prices/' + model).set(priceData)
-        .then(() => {
-            alert('Dữ liệu đã được lưu thành công!');
-        })
-        .catch((error) => {
-            console.error('Lỗi khi lưu dữ liệu:', error);
-            alert('Không thể lưu dữ liệu. Vui lòng thử lại!');
-        });
-}
+            firebase.database().ref('prices/' + model).set(priceData)
+                .then(() => {
+                    alert('Dữ liệu đã được lưu thành công!');
+                    updatePriceList();
+                })
+                .catch((error) => {
+                    console.error('Lỗi khi lưu dữ liệu:', error);
+                    alert('Không thể lưu dữ liệu. Vui lòng kiểm tra lại kết nối mạng hoặc cấu hình Firebase!');
+                });
+        }
 
         // Hàm hiển thị danh sách giá
-        firebase.database().ref('prices').on('value', (snapshot) => {
-            const data = snapshot.val();
-            const tableBody = document.getElementById('priceList');
-            tableBody.innerHTML = '';
+        function updatePriceList() {
+            firebase.database().ref('prices').on('value', (snapshot) => {
+                const data = snapshot.val();
+                const tableBody = document.getElementById('priceList');
+                tableBody.innerHTML = '';
 
-            for (let key in data) {
-                const row = `<tr>
-                    <td>${data[key].category}</td>
-                    <td>${data[key].model}</td>
-                    <td>${data[key].supplier}</td>
-                    <td>${data[key].price}</td>
-                    <td>${data[key].timestamp}</td>
-                </tr>`;
-                tableBody.innerHTML += row;
-            }
-        });
+                if (!data) {
+                    tableBody.innerHTML = '<tr><td colspan="5">Không có dữ liệu</td></tr>';
+                    return;
+                }
+
+                for (let key in data) {
+                    const row = `<tr>
+                        <td>${data[key].category}</td>
+                        <td>${data[key].model}</td>
+                        <td>${data[key].supplier}</td>
+                        <td>${data[key].price}</td>
+                        <td>${data[key].timestamp}</td>
+                    </tr>`;
+                    tableBody.innerHTML += row;
+                }
+            }, (error) => {
+                console.error('Lỗi khi tải dữ liệu:', error);
+                alert('Không thể tải dữ liệu. Vui lòng kiểm tra lại kết nối mạng hoặc cấu hình Firebase!');
+            });
+        }
+
+        // Cập nhật danh sách giá ngay khi tải trang
+        updatePriceList();
     </script>
 </body>
 </html>
+
 
