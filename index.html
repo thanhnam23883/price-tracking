@@ -129,7 +129,7 @@
                 <input type="text" id="supplier" placeholder="Nhà cung cấp" required>
 
                 <label for="price">Giá (VND):</label>
-                <input type="number" id="price" placeholder="Nhập giá" required>
+                <input type="text" id="price" placeholder="Nhập giá" required oninput="formatPriceInput(this)">
 
                 <button type="button" onclick="addOrUpdatePrice()">Xác nhận</button>
             </form>
@@ -161,7 +161,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <script>
-        // Cấu hình Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDjMUhIAq4kXgHoN3MAvlCif9C3fDvGLcA",
             authDomain: "price-tracking-2d330.firebaseapp.com",
@@ -171,11 +170,9 @@
             messagingSenderId: "446135891476",
             appId: "1:446135891476:web:56874fe4a386631d2dd901"
         };
-
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // Kiểm tra đăng nhập
         function checkLogin() {
             const password = document.getElementById('password').value;
             if (password === "123456") {
@@ -188,46 +185,44 @@
             }
         }
 
-        // Đăng xuất
         function logout() {
             localStorage.removeItem('loggedIn');
             location.reload();
         }
 
-        // Thêm hoặc cập nhật giá
+        function formatPriceInput(input) {
+            const value = input.value.replace(/\D/g, '');
+            input.value = Number(value).toLocaleString('vi-VN');
+        }
+
         function addOrUpdatePrice() {
             const category = document.getElementById('category').value;
             const model = document.getElementById('model').value;
             const supplier = document.getElementById('supplier').value;
-            const price = document.getElementById('price').value;
+            const price = document.getElementById('price').value.replace(/\D/g, '');
             const timestamp = new Date().toLocaleString();
 
-            if (category && model && supplier && price) {
-                database.ref('prices/' + model).set({
-                    category, model, supplier, price, timestamp
-                }).then(() => {
-                    alert('Dữ liệu đã được lưu!');
-                    loadPrices();
-                });
-            }
+            database.ref('prices/' + model).set({
+                category, model, supplier, price, timestamp
+            }).then(() => {
+                alert('Dữ liệu đã được lưu!');
+                loadPrices();
+            });
         }
 
-        // Tải danh sách giá và định dạng giá tiền
         function loadPrices() {
             database.ref('prices').once('value', (snapshot) => {
                 const priceList = document.getElementById('priceList');
-                priceList.innerHTML = ''; // Xóa dữ liệu cũ trước khi load
-
+                priceList.innerHTML = '';
                 snapshot.forEach((childSnapshot) => {
                     const data = childSnapshot.val();
-                    const formattedPrice = Number(data.price).toLocaleString('vi-VN'); // Định dạng giá tiền
-
+                    const formattedPrice = Number(data.price).toLocaleString('vi-VN');
                     priceList.innerHTML += `
                         <tr>
                             <td>${data.category}</td>
                             <td>${data.model}</td>
                             <td>${data.supplier}</td>
-                            <td>${formattedPrice} VND</td>
+                            <td>${formattedPrice} đ</td>
                             <td>${data.timestamp}</td>
                         </tr>
                     `;
@@ -235,7 +230,6 @@
             });
         }
 
-        // Kiểm tra trạng thái đăng nhập
         document.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem('loggedIn') === 'true') {
                 document.getElementById('loginForm').style.display = 'none';
