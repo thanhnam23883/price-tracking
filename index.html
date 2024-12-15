@@ -44,14 +44,15 @@
             color: white;
         }
 
-        .add-price {
+        .add-price, .filter-section {
             margin-bottom: 20px;
             background: white;
             padding: 20px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
-        .add-price input, .add-price select, .add-price button {
+        .add-price input, .add-price select, .add-price button,
+        .filter-section input, .filter-section select {
             padding: 10px;
             margin-right: 10px;
             margin-bottom: 10px;
@@ -111,6 +112,7 @@
 
     <!-- Nội dung chính -->
     <main>
+        <!-- Thêm hoặc cập nhật giá -->
         <div class="add-price">
             <h2>Thêm hoặc Cập nhật Giá</h2>
             <form id="priceForm">
@@ -135,6 +137,25 @@
             </form>
         </div>
 
+        <!-- Lọc và tìm kiếm -->
+        <div class="filter-section">
+            <h2>Lọc và Tìm kiếm</h2>
+            <label for="filterCategory">Loại xe:</label>
+            <select id="filterCategory">
+                <option value="">Tất cả</option>
+                <option value="Honda">Honda</option>
+                <option value="Yamaha">Yamaha</option>
+                <option value="Nhập khẩu">Nhập khẩu</option>
+                <option value="50cc">50cc</option>
+            </select>
+
+            <label for="searchModel">Tìm mẫu xe:</label>
+            <input type="text" id="searchModel" placeholder="Nhập tên mẫu xe">
+
+            <button onclick="loadPrices()">Lọc</button>
+        </div>
+
+        <!-- Danh sách giá -->
         <h2>Danh sách giá</h2>
         <table>
             <thead>
@@ -197,10 +218,15 @@
 
         function addOrUpdatePrice() {
             const category = document.getElementById('category').value;
-            const model = document.getElementById('model').value;
-            const supplier = document.getElementById('supplier').value;
+            const model = document.getElementById('model').value.trim();
+            const supplier = document.getElementById('supplier').value.trim();
             const price = document.getElementById('price').value.replace(/\D/g, '');
             const timestamp = new Date().toLocaleString();
+
+            if (!category || !model || !supplier || !price) {
+                alert("Vui lòng điền đầy đủ thông tin.");
+                return;
+            }
 
             database.ref('prices/' + model).set({
                 category, model, supplier, price, timestamp
@@ -211,21 +237,30 @@
         }
 
         function loadPrices() {
+            const filterCategory = document.getElementById('filterCategory').value;
+            const searchModel = document.getElementById('searchModel').value.trim().toLowerCase();
+
             database.ref('prices').once('value', (snapshot) => {
                 const priceList = document.getElementById('priceList');
                 priceList.innerHTML = '';
                 snapshot.forEach((childSnapshot) => {
                     const data = childSnapshot.val();
                     const formattedPrice = Number(data.price).toLocaleString('vi-VN');
-                    priceList.innerHTML += `
-                        <tr>
-                            <td>${data.category}</td>
-                            <td>${data.model}</td>
-                            <td>${data.supplier}</td>
-                            <td>${formattedPrice} đ</td>
-                            <td>${data.timestamp}</td>
-                        </tr>
-                    `;
+
+                    if (
+                        (!filterCategory || data.category === filterCategory) &&
+                        (!searchModel || data.model.toLowerCase().includes(searchModel))
+                    ) {
+                        priceList.innerHTML += `
+                            <tr>
+                                <td>${data.category}</td>
+                                <td>${data.model}</td>
+                                <td>${data.supplier}</td>
+                                <td>${formattedPrice} đ</td>
+                                <td>${data.timestamp}</td>
+                            </tr>
+                        `;
+                    }
                 });
             });
         }
