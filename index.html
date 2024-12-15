@@ -167,8 +167,13 @@
         }
 
         function logout() {
-            localStorage.removeItem('loggedIn');
-            location.reload();
+            localStorage.removeItem('loggedIn'); // Xóa trạng thái đăng nhập
+            window.location.reload(); // Tải lại trang để quay về trạng thái ban đầu
+        }
+
+        function loadPrices() {
+            document.getElementById('priceList').innerHTML = `
+                <tr><td colspan="6">Dữ liệu giá sẽ được hiển thị tại đây.</td></tr>`;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -178,14 +183,6 @@
                 loadPrices();
             }
         });
-
-        function loadPrices() {
-            document.getElementById('priceList').innerHTML = '<tr><td colspan="6">Đây là nơi hiển thị dữ liệu từ Firebase...</td></tr>';
-        }
-
-        function addOrUpdatePrice() {
-            alert("Thêm hoặc cập nhật dữ liệu (mô phỏng)");
-        }
     </script>
 </body>
 
