@@ -232,24 +232,31 @@
                 return;
             }
 
-            const priceData = {
-                category,
-                model,
-                supplier,
-                price,
-                timestamp
-            };
+        const priceData = {
+            category,
+            model,
+            supplier,
+            price,
+            timestamp
+        };
 
-            firebase.database().ref('prices/' + model).set(priceData)
-                .then(() => {
-                    alert('Dữ liệu đã được lưu thành công!');
-                    updatePriceList();
-                })
-                .catch((error) => {
-                    console.error('Lỗi khi lưu dữ liệu:', error);
-                    alert('Không thể lưu dữ liệu. Vui lòng kiểm tra lại kết nối mạng hoặc cấu hình Firebase!');
-                });
-        }
+    // Kiểm tra kết nối Firebase trước khi ghi dữ liệu
+    if (!firebase.database) {
+        alert('Không thể kết nối Firebase. Vui lòng kiểm tra cấu hình!');
+        return;
+    }
+
+    firebase.database().ref('prices/' + model).set(priceData)
+        .then(() => {
+            alert('Dữ liệu đã được lưu thành công!');
+            updatePriceList();
+        })
+        .catch((error) => {
+            console.error('Lỗi khi lưu dữ liệu:', error);
+            alert('Không thể lưu dữ liệu. Kiểm tra lại kết nối hoặc cấu hình Firebase!');
+        });
+}
+
 
         // Hàm hiển thị danh sách giá
         function updatePriceList() {
