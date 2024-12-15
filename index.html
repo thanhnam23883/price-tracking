@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống theo dõi giá</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #003580;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+        }
+
+        main {
+            padding: 20px;
+            display: none; /* Ẩn nội dung chính khi chưa đăng nhập */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #003580;
+            color: white;
+        }
+
+        .add-price {
+            margin-bottom: 20px;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .add-price input, .add-price select, .add-price button {
+            padding: 10px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background-color: #003580;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        footer {
+            text-align: center;
+            padding: 10px 20px;
+            background-color: #003580;
+            color: white;
+        }
+
+        .login {
+            max-width: 300px;
+            margin: 50px auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .login input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+        }
+
+        .login button {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Hệ thống theo dõi giá</h1>
+        <p>Theo dõi sự thay đổi giá của xe Honda, Yamaha, xe nhập khẩu và xe 50cc</p>
+    </header>
+
+    <div class="login" id="loginForm">
+        <h2>Đăng nhập</h2>
+        <input type="password" id="password" placeholder="Nhập mật khẩu">
+        <button onclick="checkLogin()">Đăng nhập</button>
+        <p id="loginError" style="color: red; display: none;">Mật khẩu sai, vui lòng thử lại!</p>
+    </div>
+
+    <main>
+        <div class="add-price">
+            <h2>Thêm hoặc Cập nhật Giá</h2>
+            <form id="priceForm">
+                <label for="category">Loại xe:</label>
+                <select id="category" name="category" required>
+                    <option value="All">Tất cả</option>
+                    <option value="Honda">Honda</option>
+                    <option value="Yamaha">Yamaha</option>
+                    <option value="Nhập khẩu">Nhập khẩu</option>
+                    <option value="50cc">50cc</option>
+                </select>
+
+                <label for="model">Mẫu xe:</label>
+                <input type="text" id="model" name="model" required placeholder="Tên mẫu xe">
+
+                <label for="supplier">Nhà cung cấp:</label>
+                <input type="text" id="supplier" name="supplier" required placeholder="Nhà cung cấp">
+
+                <label for="price">Giá (VND):</label>
+                <input type="number" id="price" name="price" required placeholder="Nhập giá">
+
+                <button type="button" onclick="addOrUpdatePrice()">Xác nhận</button>
+            </form>
+        </div>
+
+        <h2>Danh sách giá</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Loại xe</th>
+                    <th>Mẫu xe</th>
+                    <th>Nhà cung cấp</th>
+                    <th>Giá hiện tại (VND)</th>
+                    <th>Cập nhật lần cuối</th>
+                </tr>
+            </thead>
+            <tbody id="priceList">
+                <!-- Dòng dữ liệu sẽ được thêm động tại đây -->
+            </tbody>
+        </table>
+
+        <h2>Lịch sử giá</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Loại xe</th>
+                    <th>Mẫu xe</th>
+                    <th>Nhà cung cấp</th>
+                    <th>Giá (VND)</th>
+                    <th>Thời gian thay đổi</th>
+                </tr>
+            </thead>
+            <tbody id="historyList">
+                <!-- Lịch sử giá sẽ được thêm động tại đây -->
+            </tbody>
+        </table>
+    </main>
+
+    <footer>
+        &copy; 2024 Hệ thống nội bộ - Theo dõi giá xe máy
+    </footer>
+
+    <script>
+        const priceList = [];
+        const historyList = [];
+        const password = "123456"; // Mật khẩu để đăng nhập
+
+        function checkLogin() {
+            const inputPassword = document.getElementById('password').value;
+            if (inputPassword === password) {
+                document.getElementById('loginForm').style.display = 'none';
+                document.querySelector('main').style.display = 'block';
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+            }
+        }
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+        }
+
+        function addOrUpdatePrice() {
+            const category = document.getElementById('category').value;
+            const model = document.getElementById('model').value;
+            const supplier = document.getElementById('supplier').value;
+            const price = document.getElementById('price').value;
+            const timestamp = new Date().toLocaleString();
+
+            if (!category || !model || !price || !supplier) {
+                alert('Vui lòng điền đầy đủ thông tin!');
+                return;
+            }
+
+            const existingIndex = priceList.findIndex(item => item.category === category && item.model === model);
+
+            if (existingIndex !== -1) {
+                // Cập nhật giá trị mới và lưu lịch sử
+                const oldPrice = priceList[existingIndex].price;
+                if (oldPrice !== price) {
+                    historyList.push({
+                        category,
+                        model,
+                        supplier,
+                        price: oldPrice,
+                        timestamp: priceList[existingIndex].lastUpdated
+                    });
+                }
+                priceList[existingIndex].price = price;
+                priceList[existingIndex].supplier = supplier;
+                priceList[existingIndex].lastUpdated = timestamp;
+            } else {
+                // Thêm mới
+                priceList.push({ category, model, supplier, price, lastUpdated: timestamp });
+            }
+
+            renderPriceList();
+            renderHistoryList();
+            document.getElementById('priceForm').reset();
+        }
+
+        function renderPriceList() {
+            const tableBody = document.getElementById('priceList');
+            tableBody.innerHTML = '';
+
+            priceList.forEach(item => {
+                if (document.getElementById('category').value === "All" || item.category === document.getElementById('category').value) {
+                    const row = `<tr>
+                        <td>${item.category}</td>
+                        <td>${item.model}</td>
+                        <td>${item.supplier}</td>
+                        <td>${formatCurrency(item.price)}</td>
+                        <td>${item.lastUpdated}</td>
+                    </tr>`;
+                    tableBody.innerHTML += row;
+                }
+            });
+        }
+
+        function renderHistoryList() {
+            const tableBody = document.getElementById('historyList');
+            tableBody.innerHTML = '';
+
+            historyList.forEach(item => {
+                const row = `<tr>
+                    <td>${item.category}</td>
+                    <td>${item.model}</td>
+                    <td>${item.supplier}</td>
+                    <td>${formatCurrency(item.price)}</td>
+                    <td>${item.timestamp}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+    </script>
+</body>
+</html>
