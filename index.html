@@ -184,12 +184,9 @@
 
                 snapshot.forEach(childSnapshot => {
                     const data = childSnapshot.val();
-                    if (
-                        (!filterCategory || data.category === filterCategory) &&
-                        (!searchModel || data.model.toLowerCase().includes(searchModel))
-                    ) {
+                    if ((!filterCategory || data.category === filterCategory) && (!searchModel || data.model.toLowerCase().includes(searchModel))) {
                         const formattedPrice = Number(data.price).toLocaleString('vi-VN');
-                        priceList.innerHTML += 
+                        priceList.innerHTML += `
                             <tr>
                                 <td>${data.category}</td>
                                 <td>${data.model}</td>
@@ -200,8 +197,7 @@
                                     <button onclick="editPrice('${data.model}')">Sửa</button>
                                     <button onclick="deletePrice('${data.model}')">Xóa</button>
                                 </td>
-                            </tr>
-                        ;
+                            </tr>`;
                     }
                 });
             });
@@ -239,4 +235,3 @@
     </script>
 </body>
 </html>
-
