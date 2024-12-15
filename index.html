@@ -11,99 +11,76 @@
             margin: 0;
             padding: 0;
         }
-
         header {
             background-color: #003580;
             color: white;
-            padding: 10px 20px;
+            padding: 10px;
             text-align: center;
         }
-
         main {
             padding: 20px;
             display: none;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin-top: 20px;
         }
-
         table, th, td {
-            border: 1px solid #ccc;
+            border: 1px solid #ddd;
         }
-
         th, td {
             padding: 10px;
             text-align: left;
         }
-
         th {
             background-color: #003580;
             color: white;
         }
-
-        .add-price, .filter-section {
+        .form-section, .filter-section {
+            background: #fff;
+            padding: 15px;
             margin-bottom: 20px;
-            background: white;
-            padding: 20px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-
-        .add-price input, .add-price select, .add-price button,
-        .filter-section input, .filter-section select {
-            padding: 10px;
-            margin-right: 10px;
-            margin-bottom: 10px;
-        }
-
         button {
             background-color: #003580;
             color: white;
+            padding: 10px;
             border: none;
             cursor: pointer;
+            margin-right: 5px;
         }
-
         button:hover {
             background-color: #0056b3;
-        }
-
-        footer {
-            text-align: center;
-            padding: 10px 20px;
-            background-color: #003580;
-            color: white;
         }
     </style>
 </head>
 <body>
     <header>
         <h1>Hệ thống theo dõi giá</h1>
-        <p>Theo dõi sự thay đổi giá của xe Honda, Yamaha, xe nhập khẩu và xe 50cc</p>
+        <p>Theo dõi sự thay đổi giá của xe Honda, Yamaha, nhập khẩu và xe 50cc</p>
     </header>
 
     <main>
-        <!-- Thêm hoặc Cập nhật giá -->
-        <div class="add-price">
+        <!-- Thêm hoặc Cập nhật Giá -->
+        <div class="form-section">
             <h2>Thêm hoặc Cập nhật Giá</h2>
-            <form id="priceForm">
-                <input type="hidden" id="currentModel" value="">
-                <label>Loại xe:</label>
-                <select id="category">
-                    <option value="Honda">Honda</option>
-                    <option value="Yamaha">Yamaha</option>
-                    <option value="Nhập khẩu">Nhập khẩu</option>
-                    <option value="50cc">50cc</option>
-                </select>
-                <label>Mẫu xe:</label>
-                <input type="text" id="model" placeholder="Tên mẫu xe" required>
-                <label>Nhà cung cấp:</label>
-                <input type="text" id="supplier" placeholder="Nhà cung cấp" required>
-                <label>Giá (VND):</label>
-                <input type="text" id="price" placeholder="Nhập giá" required>
-                <button type="button" onclick="addOrUpdatePrice()">Xác nhận</button>
-            </form>
+            <input type="hidden" id="currentModel" value="">
+            <label>Loại xe:</label>
+            <select id="category">
+                <option value="Honda">Honda</option>
+                <option value="Yamaha">Yamaha</option>
+                <option value="Nhập khẩu">Nhập khẩu</option>
+                <option value="50cc">50cc</option>
+            </select>
+            <label>Mẫu xe:</label>
+            <input type="text" id="model" placeholder="Tên mẫu xe" required>
+            <label>Nhà cung cấp:</label>
+            <input type="text" id="supplier" placeholder="Nhà cung cấp" required>
+            <label>Giá (VND):</label>
+            <input type="text" id="price" placeholder="Nhập giá" required>
+            <button onclick="addOrUpdatePrice()">Xác nhận</button>
         </div>
 
         <!-- Lọc và Tìm kiếm -->
@@ -141,14 +118,9 @@
         <button onclick="logout()">Đăng xuất</button>
     </main>
 
-    <footer>
-        &copy; 2024 Hệ thống nội bộ - Theo dõi giá xe máy
-    </footer>
-
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyDjMUhIAq4kXgHoN3MAvlCif9C3fDvGLcA",
@@ -169,22 +141,30 @@
             const price = document.getElementById('price').value.replace(/\D/g, '');
             const timestamp = new Date().toLocaleString();
 
-            database.ref('prices/' + model).set({ category, model, supplier, price, timestamp });
-            loadPrices();
-            clearForm();
+            if (model) {
+                database.ref('prices/' + model).set({
+                    category, model, supplier, price, timestamp
+                });
+                loadPrices();
+                clearForm();
+            } else {
+                alert("Vui lòng nhập đầy đủ thông tin!");
+            }
         }
 
         function loadPrices() {
             const filterCategory = document.getElementById('filterCategory').value;
             const searchModel = document.getElementById('searchModel').value.toLowerCase();
-
             database.ref('prices').once('value', snapshot => {
                 const priceList = document.getElementById('priceList');
                 priceList.innerHTML = '';
 
                 snapshot.forEach(childSnapshot => {
                     const data = childSnapshot.val();
-                    if ((!filterCategory || data.category === filterCategory) && (!searchModel || data.model.toLowerCase().includes(searchModel))) {
+                    if (
+                        (!filterCategory || data.category === filterCategory) &&
+                        (!searchModel || data.model.toLowerCase().includes(searchModel))
+                    ) {
                         const formattedPrice = Number(data.price).toLocaleString('vi-VN');
                         priceList.innerHTML += `
                             <tr>
@@ -197,7 +177,8 @@
                                     <button onclick="editPrice('${data.model}')">Sửa</button>
                                     <button onclick="deletePrice('${data.model}')">Xóa</button>
                                 </td>
-                            </tr>`;
+                            </tr>
+                        `;
                     }
                 });
             });
@@ -210,7 +191,6 @@
                 document.getElementById('model').value = data.model;
                 document.getElementById('supplier').value = data.supplier;
                 document.getElementById('price').value = Number(data.price).toLocaleString('vi-VN');
-                document.getElementById('currentModel').value = model;
             });
         }
 
@@ -223,15 +203,18 @@
 
         function clearForm() {
             document.getElementById('priceForm').reset();
-            document.getElementById('currentModel').value = '';
         }
 
         function logout() {
+            alert("Đăng xuất thành công!");
             localStorage.removeItem('loggedIn');
             location.reload();
         }
 
-        document.addEventListener('DOMContentLoaded', () => loadPrices());
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelector('main').style.display = 'block';
+            loadPrices();
+        });
     </script>
 </body>
 </html>
