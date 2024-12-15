@@ -212,19 +212,22 @@
             }
         }
 
-        // Tải danh sách giá
+        // Tải danh sách giá và định dạng giá tiền
         function loadPrices() {
             database.ref('prices').once('value', (snapshot) => {
                 const priceList = document.getElementById('priceList');
-                priceList.innerHTML = '';
+                priceList.innerHTML = ''; // Xóa dữ liệu cũ trước khi load
+
                 snapshot.forEach((childSnapshot) => {
                     const data = childSnapshot.val();
+                    const formattedPrice = Number(data.price).toLocaleString('vi-VN'); // Định dạng giá tiền
+
                     priceList.innerHTML += `
                         <tr>
                             <td>${data.category}</td>
                             <td>${data.model}</td>
                             <td>${data.supplier}</td>
-                            <td>${data.price}</td>
+                            <td>${formattedPrice} VND</td>
                             <td>${data.timestamp}</td>
                         </tr>
                     `;
