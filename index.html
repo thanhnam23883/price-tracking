@@ -21,7 +21,7 @@
 
         main {
             padding: 20px;
-            display: none; /* Ẩn nội dung chính khi chưa đăng nhập */
+            display: none;
         }
 
         table {
@@ -171,14 +171,28 @@
         &copy; 2024 Hệ thống nội bộ - Theo dõi giá xe máy
     </footer>
 
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js"></script>
     <script>
-        const priceList = [];
-        const historyList = [];
-        const password = "123456"; // Mật khẩu để đăng nhập
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
         function checkLogin() {
             const inputPassword = document.getElementById('password').value;
-            if (inputPassword === password) {
+            const savedPassword = localStorage.getItem('savedPassword');
+
+            if (savedPassword === inputPassword || inputPassword === "123456") {
+                localStorage.setItem('savedPassword', inputPassword);
                 document.getElementById('loginForm').style.display = 'none';
                 document.querySelector('main').style.display = 'block';
             } else {
@@ -186,8 +200,9 @@
             }
         }
 
-        function formatCurrency(value) {
-            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+        function logout() {
+            localStorage.removeItem('savedPassword');
+            location.reload();
         }
 
         function addOrUpdatePrice() {
@@ -202,66 +217,34 @@
                 return;
             }
 
-            const existingIndex = priceList.findIndex(item => item.category === category && item.model === model);
+            const priceData = {
+                category,
+                model,
+                supplier,
+                price,
+                timestamp
+            };
 
-            if (existingIndex !== -1) {
-                // Cập nhật giá trị mới và lưu lịch sử
-                const oldPrice = priceList[existingIndex].price;
-                if (oldPrice !== price) {
-                    historyList.push({
-                        category,
-                        model,
-                        supplier,
-                        price: oldPrice,
-                        timestamp: priceList[existingIndex].lastUpdated
-                    });
-                }
-                priceList[existingIndex].price = price;
-                priceList[existingIndex].supplier = supplier;
-                priceList[existingIndex].lastUpdated = timestamp;
-            } else {
-                // Thêm mới
-                priceList.push({ category, model, supplier, price, lastUpdated: timestamp });
-            }
-
-            renderPriceList();
-            renderHistoryList();
-            document.getElementById('priceForm').reset();
+            firebase.database().ref('prices/' + model).set(priceData);
+            alert('Dữ liệu đã được lưu!');
         }
 
-        function renderPriceList() {
+        firebase.database().ref('prices').on('value', (snapshot) => {
+            const data = snapshot.val();
             const tableBody = document.getElementById('priceList');
             tableBody.innerHTML = '';
 
-            priceList.forEach(item => {
-                if (document.getElementById('category').value === "All" || item.category === document.getElementById('category').value) {
-                    const row = `<tr>
-                        <td>${item.category}</td>
-                        <td>${item.model}</td>
-                        <td>${item.supplier}</td>
-                        <td>${formatCurrency(item.price)}</td>
-                        <td>${item.lastUpdated}</td>
-                    </tr>`;
-                    tableBody.innerHTML += row;
-                }
-            });
-        }
-
-        function renderHistoryList() {
-            const tableBody = document.getElementById('historyList');
-            tableBody.innerHTML = '';
-
-            historyList.forEach(item => {
+            for (let key in data) {
                 const row = `<tr>
-                    <td>${item.category}</td>
-                    <td>${item.model}</td>
-                    <td>${item.supplier}</td>
-                    <td>${formatCurrency(item.price)}</td>
-                    <td>${item.timestamp}</td>
+                    <td>${data[key].category}</td>
+                    <td>${data[key].model}</td>
+                    <td>${data[key].supplier}</td>
+                    <td>${data[key].price}</td>
+                    <td>${data[key].timestamp}</td>
                 </tr>`;
                 tableBody.innerHTML += row;
-            });
-        }
+            }
+        });
     </script>
 </body>
 </html>
