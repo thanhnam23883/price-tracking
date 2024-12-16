@@ -70,7 +70,6 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
     <header>
         <h1>Hệ thống theo dõi giá</h1>
         <p>Theo dõi sự thay đổi giá của xe Honda, Yamaha, xe nhập khẩu và xe 50cc</p>
@@ -86,10 +85,8 @@
 
     <!-- Nội dung chính -->
     <main>
-        <!-- Thêm hoặc cập nhật giá -->
         <div class="form-section">
             <h2>Thêm hoặc Cập nhật Giá</h2>
-            <input type="hidden" id="currentModel" value="">
             <label>Loại xe:</label>
             <select id="category">
                 <option value="Honda">Honda</option>
@@ -108,23 +105,6 @@
             <button onclick="addOrUpdatePrice()">Xác nhận</button>
         </div>
 
-        <!-- Lọc và tìm kiếm -->
-        <div class="filter-section">
-            <h2>Lọc và Tìm kiếm</h2>
-            <label>Loại xe:</label>
-            <select id="filterCategory">
-                <option value="">Tất cả</option>
-                <option value="Honda">Honda</option>
-                <option value="Yamaha">Yamaha</option>
-                <option value="Nhập khẩu">Nhập khẩu</option>
-                <option value="50cc">50cc</option>
-            </select>
-            <label>Tìm mẫu xe:</label>
-            <input type="text" id="searchModel" placeholder="Nhập tên mẫu xe">
-            <button onclick="loadPrices()">Lọc</button>
-        </div>
-
-        <!-- Danh sách giá -->
         <h2>Danh sách giá</h2>
         <table>
             <thead>
@@ -145,10 +125,10 @@
     </main>
 
     <!-- Firebase -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
-        import { getDatabase, ref, set, get, child, remove } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js";
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js"></script>
 
+    <script>
         // Cấu hình Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDjMUhIAq4kXgHoN3MAvlCif9C3fDvGLcA",
@@ -158,30 +138,31 @@
             storageBucket: "price-tracking-2d330.firebasestorage.app",
             messagingSenderId: "446135891476",
             appId: "1:446135891476:web:56874fe4a386631d2dd901",
-            measurementId: "G-VZV4VRD7WP"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
         function checkLogin() {
             const password = document.getElementById('password').value;
             if (password === "123456") {
                 localStorage.setItem('loggedIn', 'true');
-                document.getElementById('login').style.display = 'none';
-                document.querySelector('main').style.display = 'block';
-                loadPrices();
+                showContent();
             } else {
                 document.getElementById('errorMessage').style.display = 'block';
             }
         }
 
-        function loadPrices() {
-            const dbRef = ref(database, 'prices');
-            const priceList = document.getElementById('priceList');
-            priceList.innerHTML = '';
+        function showContent() {
+            document.getElementById('login').style.display = 'none';
+            document.querySelector('main').style.display = 'block';
+            loadPrices();
+        }
 
-            get(dbRef).then(snapshot => {
+        function loadPrices() {
+            const priceList = document.getElementById('priceList');
+            db.ref('prices').once('value', snapshot => {
+                priceList.innerHTML = '';
                 snapshot.forEach(childSnapshot => {
                     const data = childSnapshot.val();
                     const formattedPrice = Number(data.price).toLocaleString('vi-VN');
@@ -203,16 +184,28 @@
             });
         }
 
-        window.logout = function () {
+        function addOrUpdatePrice() {
+            const category = document.getElementById('category').value;
+            const model = document.getElementById('model').value;
+            const supplier = document.getElementById('supplier').value;
+            const price = document.getElementById('price').value.replace(/\D/g, '');
+            const priceDate = document.getElementById('priceDate').value || new Date().toISOString().split('T')[0];
+            const timestamp = new Date().toLocaleString();
+
+            if (model) {
+                db.ref('prices/' + model).set({ category, model, supplier, price, priceDate, timestamp });
+                loadPrices();
+            }
+        }
+
+        function logout() {
             localStorage.removeItem('loggedIn');
             location.reload();
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem('loggedIn') === 'true') {
-                document.getElementById('login').style.display = 'none';
-                document.querySelector('main').style.display = 'block';
-                loadPrices();
+                showContent();
             }
         });
     </script>
