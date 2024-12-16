@@ -96,6 +96,7 @@
 
     <!-- Nội dung chính -->
     <main>
+        <!-- Thêm hoặc Cập nhật Giá -->
         <div class="form-section">
             <h2>Thêm hoặc Cập nhật Giá</h2>
             <label>Loại xe:</label>
@@ -125,15 +126,16 @@
                     <th>Nhà cung cấp</th>
                     <th>Giá (VND)</th>
                     <th>Ngày nhập giá</th>
+                    <th>Thời gian cập nhật</th>
                     <th>Hành động</th>
                 </tr>
             </thead>
             <tbody id="priceList"></tbody>
         </table>
-
         <button onclick="logout()">Đăng xuất</button>
     </main>
 
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script>
@@ -154,16 +156,33 @@
             const password = document.getElementById('password').value;
             if (password === "123456") {
                 localStorage.setItem('loggedIn', 'true');
-                showMainContent();
+                document.getElementById('login').style.display = 'none';
+                document.querySelector('main').style.display = 'block';
+                loadPrices();
             } else {
                 document.getElementById('errorMessage').style.display = 'block';
             }
         }
 
-        function showMainContent() {
-            document.getElementById('login').style.display = 'none';
-            document.querySelector('main').style.display = 'block';
-            loadPrices();
+        function addOrUpdatePrice() {
+            const category = document.getElementById('category').value;
+            const model = document.getElementById('model').value;
+            const supplier = document.getElementById('supplier').value;
+            const price = document.getElementById('price').value.replace(/\D/g, '');
+            const priceDate = document.getElementById('priceDate').value;
+            const timestamp = new Date().toLocaleString();
+
+            if (model) {
+                database.ref('prices/' + model).set({
+                    category, 
+                    model, 
+                    supplier, 
+                    price, 
+                    priceDate,
+                    timestamp
+                });
+                loadPrices();
+            }
         }
 
         function loadPrices() {
@@ -179,7 +198,8 @@
                             <td>${data.model}</td>
                             <td>${data.supplier}</td>
                             <td>${formattedPrice} đ</td>
-                            <td>${data.priceDate}</td>
+                            <td>${data.priceDate || '-'}</td>
+                            <td>${data.timestamp}</td>
                             <td>
                                 <button onclick="editPrice('${data.model}')">Sửa</button>
                                 <button onclick="deletePrice('${data.model}')">Xóa</button>
@@ -190,6 +210,24 @@
             });
         }
 
+        function editPrice(model) {
+            database.ref('prices/' + model).once('value', snapshot => {
+                const data = snapshot.val();
+                document.getElementById('category').value = data.category;
+                document.getElementById('model').value = data.model;
+                document.getElementById('supplier').value = data.supplier;
+                document.getElementById('price').value = data.price;
+                document.getElementById('priceDate').value = data.priceDate || '';
+            });
+        }
+
+        function deletePrice(model) {
+            if (confirm("Bạn có chắc muốn xóa dữ liệu này?")) {
+                database.ref('prices/' + model).remove();
+                loadPrices();
+            }
+        }
+
         function logout() {
             localStorage.removeItem('loggedIn');
             window.location.reload();
@@ -197,7 +235,9 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem('loggedIn') === 'true') {
-                showMainContent();
+                document.getElementById('login').style.display = 'none';
+                document.querySelector('main').style.display = 'block';
+                loadPrices();
             }
         });
     </script>
