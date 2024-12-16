@@ -11,46 +11,38 @@
             margin: 0;
             padding: 0;
         }
-
         header {
             background-color: #003580;
             color: white;
             padding: 10px;
             text-align: center;
         }
-
         main {
             padding: 20px;
             display: none;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
         }
-
         table, th, td {
             border: 1px solid #ddd;
         }
-
         th, td {
             padding: 10px;
             text-align: left;
         }
-
         th {
             background-color: #003580;
             color: white;
         }
-
         .form-section, .filter-section {
             background: #fff;
             padding: 15px;
             margin-bottom: 20px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-
         button {
             background-color: #003580;
             color: white;
@@ -59,11 +51,9 @@
             cursor: pointer;
             margin-right: 5px;
         }
-
         button:hover {
             background-color: #0056b3;
         }
-
         .login {
             max-width: 300px;
             margin: 50px auto;
@@ -72,7 +62,6 @@
             text-align: center;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-
         .login input {
             width: 100%;
             margin-bottom: 10px;
@@ -81,6 +70,7 @@
     </style>
 </head>
 <body>
+    <!-- Header -->
     <header>
         <h1>Hệ thống theo dõi giá</h1>
         <p>Theo dõi sự thay đổi giá của xe Honda, Yamaha, xe nhập khẩu và xe 50cc</p>
@@ -96,6 +86,7 @@
 
     <!-- Nội dung chính -->
     <main>
+        <!-- Thêm hoặc cập nhật giá -->
         <div class="form-section">
             <h2>Thêm hoặc Cập nhật Giá</h2>
             <input type="hidden" id="currentModel" value="">
@@ -117,6 +108,23 @@
             <button onclick="addOrUpdatePrice()">Xác nhận</button>
         </div>
 
+        <!-- Lọc và tìm kiếm -->
+        <div class="filter-section">
+            <h2>Lọc và Tìm kiếm</h2>
+            <label>Loại xe:</label>
+            <select id="filterCategory">
+                <option value="">Tất cả</option>
+                <option value="Honda">Honda</option>
+                <option value="Yamaha">Yamaha</option>
+                <option value="Nhập khẩu">Nhập khẩu</option>
+                <option value="50cc">50cc</option>
+            </select>
+            <label>Tìm mẫu xe:</label>
+            <input type="text" id="searchModel" placeholder="Nhập tên mẫu xe">
+            <button onclick="loadPrices()">Lọc</button>
+        </div>
+
+        <!-- Danh sách giá -->
         <h2>Danh sách giá</h2>
         <table>
             <thead>
@@ -137,24 +145,24 @@
     </main>
 
     <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
+        import { getDatabase, ref, set, get, child, remove } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js";
 
-    <script>
-        // Cấu hình Firebase mới
+        // Cấu hình Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDjMUhIAq4kXgHoN3MAvlCif9C3fDvGLcA",
             authDomain: "price-tracking-2d330.firebaseapp.com",
             databaseURL: "https://price-tracking-2d330-default-rtdb.firebaseio.com",
             projectId: "price-tracking-2d330",
-            storageBucket: "price-tracking-2d330.appspot.com",
+            storageBucket: "price-tracking-2d330.firebasestorage.app",
             messagingSenderId: "446135891476",
             appId: "1:446135891476:web:56874fe4a386631d2dd901",
             measurementId: "G-VZV4VRD7WP"
         };
 
-        const app = firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
 
         function checkLogin() {
             const password = document.getElementById('password').value;
@@ -169,10 +177,11 @@
         }
 
         function loadPrices() {
+            const dbRef = ref(database, 'prices');
             const priceList = document.getElementById('priceList');
-            database.ref('prices').once('value', snapshot => {
-                priceList.innerHTML = '';
+            priceList.innerHTML = '';
 
+            get(dbRef).then(snapshot => {
                 snapshot.forEach(childSnapshot => {
                     const data = childSnapshot.val();
                     const formattedPrice = Number(data.price).toLocaleString('vi-VN');
@@ -194,43 +203,9 @@
             });
         }
 
-        function addOrUpdatePrice() {
-            const category = document.getElementById('category').value;
-            const model = document.getElementById('model').value;
-            const supplier = document.getElementById('supplier').value;
-            const price = document.getElementById('price').value.replace(/\D/g, '');
-            const priceDate = document.getElementById('priceDate').value || new Date().toISOString().split('T')[0];
-            const timestamp = new Date().toLocaleString();
-
-            if (model) {
-                database.ref('prices/' + model).set({
-                    category, model, supplier, price, priceDate, timestamp
-                });
-                loadPrices();
-            }
-        }
-
-        function editPrice(model) {
-            database.ref('prices/' + model).once('value', snapshot => {
-                const data = snapshot.val();
-                document.getElementById('category').value = data.category;
-                document.getElementById('model').value = data.model;
-                document.getElementById('supplier').value = data.supplier;
-                document.getElementById('price').value = data.price;
-                document.getElementById('priceDate').value = data.priceDate || '';
-            });
-        }
-
-        function deletePrice(model) {
-            if (confirm("Bạn có chắc muốn xóa dữ liệu này?")) {
-                database.ref('prices/' + model).remove();
-                loadPrices();
-            }
-        }
-
-        function logout() {
+        window.logout = function () {
             localStorage.removeItem('loggedIn');
-            window.location.reload();
+            location.reload();
         }
 
         document.addEventListener('DOMContentLoaded', () => {
