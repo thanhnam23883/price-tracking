@@ -11,38 +11,46 @@
             margin: 0;
             padding: 0;
         }
+
         header {
             background-color: #003580;
             color: white;
             padding: 10px;
             text-align: center;
         }
+
         main {
             padding: 20px;
             display: none;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
         }
+
         table, th, td {
             border: 1px solid #ddd;
         }
+
         th, td {
             padding: 10px;
             text-align: left;
         }
+
         th {
             background-color: #003580;
             color: white;
         }
+
         .form-section, .filter-section {
             background: #fff;
             padding: 15px;
             margin-bottom: 20px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+
         button {
             background-color: #003580;
             color: white;
@@ -51,9 +59,11 @@
             cursor: pointer;
             margin-right: 5px;
         }
+
         button:hover {
             background-color: #0056b3;
         }
+
         .login {
             max-width: 300px;
             margin: 50px auto;
@@ -62,6 +72,7 @@
             text-align: center;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+
         .login input {
             width: 100%;
             margin-bottom: 10px;
@@ -105,21 +116,6 @@
             <button onclick="addOrUpdatePrice()">Xác nhận</button>
         </div>
 
-        <div class="filter-section">
-            <h2>Lọc và Tìm kiếm</h2>
-            <label>Loại xe:</label>
-            <select id="filterCategory">
-                <option value="">Tất cả</option>
-                <option value="Honda">Honda</option>
-                <option value="Yamaha">Yamaha</option>
-                <option value="Nhập khẩu">Nhập khẩu</option>
-                <option value="50cc">50cc</option>
-            </select>
-            <label>Tìm mẫu xe:</label>
-            <input type="text" id="searchModel" placeholder="Nhập tên mẫu xe">
-            <button onclick="loadPrices()">Lọc</button>
-        </div>
-
         <h2>Danh sách giá</h2>
         <table>
             <thead>
@@ -129,7 +125,6 @@
                     <th>Nhà cung cấp</th>
                     <th>Giá (VND)</th>
                     <th>Ngày nhập giá</th>
-                    <th>Thời gian cập nhật</th>
                     <th>Hành động</th>
                 </tr>
             </thead>
@@ -143,7 +138,13 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script>
         const firebaseConfig = {
-            // Firebase config
+            apiKey: "your-api-key",
+            authDomain: "your-auth-domain",
+            databaseURL: "your-database-url",
+            projectId: "your-project-id",
+            storageBucket: "your-storage-bucket",
+            messagingSenderId: "your-messaging-sender-id",
+            appId: "your-app-id"
         };
 
         firebase.initializeApp(firebaseConfig);
@@ -153,12 +154,16 @@
             const password = document.getElementById('password').value;
             if (password === "123456") {
                 localStorage.setItem('loggedIn', 'true');
-                document.getElementById('login').style.display = 'none';
-                document.querySelector('main').style.display = 'block';
-                loadPrices();
+                showMainContent();
             } else {
                 document.getElementById('errorMessage').style.display = 'block';
             }
+        }
+
+        function showMainContent() {
+            document.getElementById('login').style.display = 'none';
+            document.querySelector('main').style.display = 'block';
+            loadPrices();
         }
 
         function loadPrices() {
@@ -175,7 +180,6 @@
                             <td>${data.supplier}</td>
                             <td>${formattedPrice} đ</td>
                             <td>${data.priceDate}</td>
-                            <td>${data.timestamp}</td>
                             <td>
                                 <button onclick="editPrice('${data.model}')">Sửa</button>
                                 <button onclick="deletePrice('${data.model}')">Xóa</button>
@@ -186,38 +190,6 @@
             });
         }
 
-        function addOrUpdatePrice() {
-            const category = document.getElementById('category').value;
-            const model = document.getElementById('model').value;
-            const supplier = document.getElementById('supplier').value;
-            const price = document.getElementById('price').value.replace(/\D/g, '');
-            const priceDate = document.getElementById('priceDate').value;
-            const timestamp = new Date().toLocaleString();
-
-            database.ref('prices/' + model).set({
-                category, model, supplier, price, priceDate, timestamp
-            });
-            loadPrices();
-        }
-
-        function editPrice(model) {
-            database.ref('prices/' + model).once('value', snapshot => {
-                const data = snapshot.val();
-                document.getElementById('category').value = data.category;
-                document.getElementById('model').value = data.model;
-                document.getElementById('supplier').value = data.supplier;
-                document.getElementById('price').value = data.price;
-                document.getElementById('priceDate').value = data.priceDate;
-            });
-        }
-
-        function deletePrice(model) {
-            if (confirm("Bạn có chắc muốn xóa dữ liệu này?")) {
-                database.ref('prices/' + model).remove();
-                loadPrices();
-            }
-        }
-
         function logout() {
             localStorage.removeItem('loggedIn');
             window.location.reload();
@@ -225,9 +197,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem('loggedIn') === 'true') {
-                document.getElementById('login').style.display = 'none';
-                document.querySelector('main').style.display = 'block';
-                loadPrices();
+                showMainContent();
             }
         });
     </script>
