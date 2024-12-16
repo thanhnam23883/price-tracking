@@ -99,6 +99,7 @@
         <!-- Thêm hoặc Cập nhật Giá -->
         <div class="form-section">
             <h2>Thêm hoặc Cập nhật Giá</h2>
+            <input type="hidden" id="currentModel" value="">
             <label>Loại xe:</label>
             <select id="category">
                 <option value="Honda">Honda</option>
@@ -113,10 +114,11 @@
             <label>Giá (VND):</label>
             <input type="text" id="price" placeholder="Nhập giá" required>
             <label>Ngày nhập giá:</label>
-            <input type="date" id="priceDate" required>
+            <input type="date" id="priceDate" placeholder="Chọn ngày nhập giá">
             <button onclick="addOrUpdatePrice()">Xác nhận</button>
         </div>
 
+        <!-- Danh sách giá -->
         <h2>Danh sách giá</h2>
         <table>
             <thead>
@@ -132,6 +134,7 @@
             </thead>
             <tbody id="priceList"></tbody>
         </table>
+
         <button onclick="logout()">Đăng xuất</button>
     </main>
 
@@ -140,13 +143,13 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script>
         const firebaseConfig = {
-            apiKey: "your-api-key",
-            authDomain: "your-auth-domain",
-            databaseURL: "your-database-url",
-            projectId: "your-project-id",
-            storageBucket: "your-storage-bucket",
-            messagingSenderId: "your-messaging-sender-id",
-            appId: "your-app-id"
+            apiKey: "API_KEY",
+            authDomain: "AUTH_DOMAIN",
+            databaseURL: "DATABASE_URL",
+            projectId: "PROJECT_ID",
+            storageBucket: "STORAGE_BUCKET",
+            messagingSenderId: "MESSAGING_SENDER_ID",
+            appId: "APP_ID"
         };
 
         firebase.initializeApp(firebaseConfig);
@@ -156,39 +159,45 @@
             const password = document.getElementById('password').value;
             if (password === "123456") {
                 localStorage.setItem('loggedIn', 'true');
-                displayMainContent();
+                document.getElementById('login').style.display = 'none';
+                document.querySelector('main').style.display = 'block';
+                loadPrices();
             } else {
                 document.getElementById('errorMessage').style.display = 'block';
             }
         }
 
-        function displayMainContent() {
-            document.getElementById('login').style.display = 'none';
-            document.querySelector('main').style.display = 'block';
-            loadPrices();
-        }
-
         function loadPrices() {
+            const filterCategory = document.getElementById('filterCategory').value;
+            const searchModel = document.getElementById('searchModel').value.toLowerCase();
             const priceList = document.getElementById('priceList');
+
             database.ref('prices').once('value', snapshot => {
                 priceList.innerHTML = '';
+
                 snapshot.forEach(childSnapshot => {
                     const data = childSnapshot.val();
-                    const formattedPrice = Number(data.price).toLocaleString('vi-VN');
-                    priceList.innerHTML += `
-                        <tr>
-                            <td>${data.category}</td>
-                            <td>${data.model}</td>
-                            <td>${data.supplier}</td>
-                            <td>${formattedPrice} đ</td>
-                            <td>${data.priceDate || '-'}</td>
-                            <td>${data.timestamp}</td>
-                            <td>
-                                <button onclick="editPrice('${data.model}')">Sửa</button>
-                                <button onclick="deletePrice('${data.model}')">Xóa</button>
-                            </td>
-                        </tr>
-                    `;
+
+                    if (
+                        (!filterCategory || data.category === filterCategory) &&
+                        (!searchModel || data.model.toLowerCase().includes(searchModel))
+                    ) {
+                        const formattedPrice = Number(data.price).toLocaleString('vi-VN');
+                        priceList.innerHTML += `
+                            <tr>
+                                <td>${data.category}</td>
+                                <td>${data.model}</td>
+                                <td>${data.supplier}</td>
+                                <td>${formattedPrice} đ</td>
+                                <td>${data.priceDate || '-'}</td>
+                                <td>${data.timestamp}</td>
+                                <td>
+                                    <button onclick="editPrice('${data.model}')">Sửa</button>
+                                    <button onclick="deletePrice('${data.model}')">Xóa</button>
+                                </td>
+                            </tr>
+                        `;
+                    }
                 });
             });
         }
@@ -198,12 +207,17 @@
             const model = document.getElementById('model').value;
             const supplier = document.getElementById('supplier').value;
             const price = document.getElementById('price').value.replace(/\D/g, '');
-            const priceDate = document.getElementById('priceDate').value;
+            const priceDate = document.getElementById('priceDate').value || new Date().toISOString().split('T')[0];
             const timestamp = new Date().toLocaleString();
 
             if (model) {
                 database.ref('prices/' + model).set({
-                    category, model, supplier, price, priceDate, timestamp
+                    category,
+                    model,
+                    supplier,
+                    price,
+                    priceDate,
+                    timestamp
                 });
                 loadPrices();
             }
@@ -234,7 +248,9 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem('loggedIn') === 'true') {
-                displayMainContent();
+                document.getElementById('login').style.display = 'none';
+                document.querySelector('main').style.display = 'block';
+                loadPrices();
             }
         });
     </script>
