@@ -156,33 +156,16 @@
             const password = document.getElementById('password').value;
             if (password === "123456") {
                 localStorage.setItem('loggedIn', 'true');
-                document.getElementById('login').style.display = 'none';
-                document.querySelector('main').style.display = 'block';
-                loadPrices();
+                displayMainContent();
             } else {
                 document.getElementById('errorMessage').style.display = 'block';
             }
         }
 
-        function addOrUpdatePrice() {
-            const category = document.getElementById('category').value;
-            const model = document.getElementById('model').value;
-            const supplier = document.getElementById('supplier').value;
-            const price = document.getElementById('price').value.replace(/\D/g, '');
-            const priceDate = document.getElementById('priceDate').value;
-            const timestamp = new Date().toLocaleString();
-
-            if (model) {
-                database.ref('prices/' + model).set({
-                    category, 
-                    model, 
-                    supplier, 
-                    price, 
-                    priceDate,
-                    timestamp
-                });
-                loadPrices();
-            }
+        function displayMainContent() {
+            document.getElementById('login').style.display = 'none';
+            document.querySelector('main').style.display = 'block';
+            loadPrices();
         }
 
         function loadPrices() {
@@ -210,6 +193,22 @@
             });
         }
 
+        function addOrUpdatePrice() {
+            const category = document.getElementById('category').value;
+            const model = document.getElementById('model').value;
+            const supplier = document.getElementById('supplier').value;
+            const price = document.getElementById('price').value.replace(/\D/g, '');
+            const priceDate = document.getElementById('priceDate').value;
+            const timestamp = new Date().toLocaleString();
+
+            if (model) {
+                database.ref('prices/' + model).set({
+                    category, model, supplier, price, priceDate, timestamp
+                });
+                loadPrices();
+            }
+        }
+
         function editPrice(model) {
             database.ref('prices/' + model).once('value', snapshot => {
                 const data = snapshot.val();
@@ -235,9 +234,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem('loggedIn') === 'true') {
-                document.getElementById('login').style.display = 'none';
-                document.querySelector('main').style.display = 'block';
-                loadPrices();
+                displayMainContent();
             }
         });
     </script>
