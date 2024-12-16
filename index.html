@@ -96,7 +96,6 @@
 
     <!-- Nội dung chính -->
     <main>
-        <!-- Thêm hoặc Cập nhật Giá -->
         <div class="form-section">
             <h2>Thêm hoặc Cập nhật Giá</h2>
             <input type="hidden" id="currentModel" value="">
@@ -118,7 +117,6 @@
             <button onclick="addOrUpdatePrice()">Xác nhận</button>
         </div>
 
-        <!-- Danh sách giá -->
         <h2>Danh sách giá</h2>
         <table>
             <thead>
@@ -139,20 +137,23 @@
     </main>
 
     <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js"></script>
+
     <script>
+        // Cấu hình Firebase mới
         const firebaseConfig = {
-            apiKey: "API_KEY",
-            authDomain: "AUTH_DOMAIN",
-            databaseURL: "DATABASE_URL",
-            projectId: "PROJECT_ID",
-            storageBucket: "STORAGE_BUCKET",
-            messagingSenderId: "MESSAGING_SENDER_ID",
-            appId: "APP_ID"
+            apiKey: "AIzaSyDjMUhIAq4kXgHoN3MAvlCif9C3fDvGLcA",
+            authDomain: "price-tracking-2d330.firebaseapp.com",
+            databaseURL: "https://price-tracking-2d330-default-rtdb.firebaseio.com",
+            projectId: "price-tracking-2d330",
+            storageBucket: "price-tracking-2d330.appspot.com",
+            messagingSenderId: "446135891476",
+            appId: "1:446135891476:web:56874fe4a386631d2dd901",
+            measurementId: "G-VZV4VRD7WP"
         };
 
-        firebase.initializeApp(firebaseConfig);
+        const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
         function checkLogin() {
@@ -168,36 +169,27 @@
         }
 
         function loadPrices() {
-            const filterCategory = document.getElementById('filterCategory').value;
-            const searchModel = document.getElementById('searchModel').value.toLowerCase();
             const priceList = document.getElementById('priceList');
-
             database.ref('prices').once('value', snapshot => {
                 priceList.innerHTML = '';
 
                 snapshot.forEach(childSnapshot => {
                     const data = childSnapshot.val();
-
-                    if (
-                        (!filterCategory || data.category === filterCategory) &&
-                        (!searchModel || data.model.toLowerCase().includes(searchModel))
-                    ) {
-                        const formattedPrice = Number(data.price).toLocaleString('vi-VN');
-                        priceList.innerHTML += `
-                            <tr>
-                                <td>${data.category}</td>
-                                <td>${data.model}</td>
-                                <td>${data.supplier}</td>
-                                <td>${formattedPrice} đ</td>
-                                <td>${data.priceDate || '-'}</td>
-                                <td>${data.timestamp}</td>
-                                <td>
-                                    <button onclick="editPrice('${data.model}')">Sửa</button>
-                                    <button onclick="deletePrice('${data.model}')">Xóa</button>
-                                </td>
-                            </tr>
-                        `;
-                    }
+                    const formattedPrice = Number(data.price).toLocaleString('vi-VN');
+                    priceList.innerHTML += `
+                        <tr>
+                            <td>${data.category}</td>
+                            <td>${data.model}</td>
+                            <td>${data.supplier}</td>
+                            <td>${formattedPrice} đ</td>
+                            <td>${data.priceDate || '-'}</td>
+                            <td>${data.timestamp}</td>
+                            <td>
+                                <button onclick="editPrice('${data.model}')">Sửa</button>
+                                <button onclick="deletePrice('${data.model}')">Xóa</button>
+                            </td>
+                        </tr>
+                    `;
                 });
             });
         }
@@ -212,12 +204,7 @@
 
             if (model) {
                 database.ref('prices/' + model).set({
-                    category,
-                    model,
-                    supplier,
-                    price,
-                    priceDate,
-                    timestamp
+                    category, model, supplier, price, priceDate, timestamp
                 });
                 loadPrices();
             }
