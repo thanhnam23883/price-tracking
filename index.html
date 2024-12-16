@@ -116,21 +116,6 @@
             <button onclick="addOrUpdatePrice()">Xác nhận</button>
         </div>
 
-        <div class="filter-section">
-            <h2>Lọc và Tìm kiếm</h2>
-            <label>Loại xe:</label>
-            <select id="filterCategory">
-                <option value="">Tất cả</option>
-                <option value="Honda">Honda</option>
-                <option value="Yamaha">Yamaha</option>
-                <option value="Nhập khẩu">Nhập khẩu</option>
-                <option value="50cc">50cc</option>
-            </select>
-            <label>Tìm mẫu xe:</label>
-            <input type="text" id="searchModel" placeholder="Nhập tên mẫu xe">
-            <button onclick="loadPrices()">Lọc</button>
-        </div>
-
         <h2>Danh sách giá</h2>
         <table>
             <thead>
@@ -146,15 +131,13 @@
             </thead>
             <tbody id="priceList"></tbody>
         </table>
-
         <button onclick="logout()">Đăng xuất</button>
     </main>
 
-    <!-- Firebase -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getDatabase, ref, set, get, remove, child } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
-
+    <!-- Firebase SDK v8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script>
         const firebaseConfig = {
             apiKey: "AIzaSyDjMUhIAq4kXgHoN3MAvlCif9C3fDvGLcA",
             authDomain: "price-tracking-2d330.firebaseapp.com",
@@ -165,8 +148,8 @@
             appId: "1:446135891476:web:56874fe4a386631d2dd901"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
         function checkLogin() {
             const password = document.getElementById('password').value;
@@ -182,9 +165,8 @@
 
         function loadPrices() {
             const priceList = document.getElementById('priceList');
-            priceList.innerHTML = '';
-
-            get(ref(database, 'prices')).then(snapshot => {
+            database.ref('prices').once('value', snapshot => {
+                priceList.innerHTML = '';
                 snapshot.forEach(childSnapshot => {
                     const data = childSnapshot.val();
                     priceList.innerHTML += `
@@ -205,24 +187,23 @@
             });
         }
 
-        window.addOrUpdatePrice = function() {
+        function addOrUpdatePrice() {
             const model = document.getElementById('model').value;
             const data = {
                 category: document.getElementById('category').value,
-                model: model,
+                model,
                 supplier: document.getElementById('supplier').value,
                 price: document.getElementById('price').value.replace(/\D/g, ''),
                 priceDate: document.getElementById('priceDate').value,
                 timestamp: new Date().toLocaleString()
             };
+            database.ref('prices/' + model).set(data).then(() => loadPrices());
+        }
 
-            set(ref(database, 'prices/' + model), data).then(() => loadPrices());
-        };
-
-        window.logout = function() {
+        function logout() {
             localStorage.removeItem('loggedIn');
             window.location.reload();
-        };
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem('loggedIn') === 'true') {
