@@ -93,6 +93,7 @@
 <body>
     <header>
         <h1>Hệ thống theo dõi giá</h1>
+        <div id="statusSummary"></div>
         <p>Theo dõi sự thay đổi giá của xe Honda, Yamaha, xe nhập khẩu và xe 50cc</p>
     </header>
 
@@ -213,7 +214,11 @@
                 status.textContent = `Tổng kết: ${Object.entries(summary).map(([key, value]) => `${key}: ${value}`).join(', ')}`;
             });
         }
-
+    function updateStatusSummary(data) {
+        const summary = calculateSummary(data); // Hàm tính toán số lượng từng loại kết quả
+        const summaryText = `Tổng kết: ${summary}`;
+        document.getElementById('statusSummary').innerText = summaryText;
+    }
         function addOrUpdatePrice() {
             const model = document.getElementById('model').value;
             const data = {
