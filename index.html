@@ -133,6 +133,11 @@
                 </tr>
             </thead>
             <tbody id="priceList"></tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="7" id="summaryRow">Tổng kết: </td>
+                </tr>
+            </tfoot>
         </table>
         <button onclick="logout()">Đăng xuất</button>
     </main>
@@ -169,10 +174,21 @@
 
         function loadPrices() {
             const priceList = document.getElementById('priceList');
+            const summaryRow = document.getElementById('summaryRow');
             database.ref('prices').once('value', snapshot => {
                 priceList.innerHTML = '';
+                const summary = {};
+
                 snapshot.forEach(childSnapshot => {
                     const data = childSnapshot.val();
+
+                    // Populate the summary object
+                    if (data.category in summary) {
+                        summary[data.category]++;
+                    } else {
+                        summary[data.category] = 1;
+                    }
+
                     priceList.innerHTML += `
                         <tr>
                             <td>${data.category}</td>
@@ -188,6 +204,9 @@
                         </tr>
                     `;
                 });
+
+                // Generate the summary row
+                summaryRow.innerHTML = `Tổng kết: ${Object.entries(summary).map(([key, value]) => `${key}: ${value}`).join(', ')}`;
             });
         }
 
