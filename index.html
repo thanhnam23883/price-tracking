@@ -13,7 +13,7 @@
         }
 
         header {
-            background-color: #0000FF; /* Xanh dương */
+            background-color: #003580;
             color: white;
             padding: 10px;
             text-align: center;
@@ -28,7 +28,6 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
-            table-layout: auto;
         }
 
         table, th, td {
@@ -38,12 +37,11 @@
         th, td {
             padding: 10px;
             text-align: left;
-            word-wrap: break-word;
         }
 
         th {
-            background-color: #FFFF00; /* Vàng tươi */
-            color: black;
+            background-color: #003580;
+            color: white;
         }
 
         .form-section, .filter-section {
@@ -54,7 +52,7 @@
         }
 
         button {
-            background-color: #FF0000; /* Đỏ tươi */
+            background-color: #003580;
             color: white;
             padding: 10px;
             border: none;
@@ -63,8 +61,7 @@
         }
 
         button:hover {
-            background-color: #FFFF00; /* Vàng tươi */
-            color: black;
+            background-color: #0056b3;
         }
 
         .login {
@@ -81,19 +78,11 @@
             margin-bottom: 10px;
             padding: 10px;
         }
-
-        .status {
-            font-size: 16px;
-            margin-bottom: 20px;
-            font-weight: bold;
-            color: #000;
-        }
     </style>
 </head>
 <body>
     <header>
         <h1>Hệ thống theo dõi giá</h1>
-        <div id="statusSummary"></div>
         <p>Theo dõi sự thay đổi giá của xe Honda, Yamaha, xe nhập khẩu và xe 50cc</p>
     </header>
 
@@ -102,7 +91,7 @@
         <h2>Đăng nhập</h2>
         <input type="password" id="password" placeholder="Nhập mật khẩu">
         <button onclick="checkLogin()">Đăng nhập</button>
-        <p id="errorMessage" style="color: #FF0000; display: none;">Sai mật khẩu. Vui lòng thử lại!</p>
+        <p id="errorMessage" style="color: red; display: none;">Sai mật khẩu. Vui lòng thử lại!</p>
     </div>
 
     <!-- Nội dung chính -->
@@ -126,8 +115,6 @@
             <input type="date" id="priceDate" required>
             <button onclick="addOrUpdatePrice()">Xác nhận</button>
         </div>
-
-        <div id="status" class="status"></div>
 
         <h2>Danh sách giá</h2>
         <table>
@@ -171,7 +158,6 @@
                 document.getElementById('login').style.display = 'none';
                 document.querySelector('main').style.display = 'block';
                 loadPrices();
-                setInterval(loadPrices, 5000); // Tự động tải dữ liệu mỗi 5 giây
             } else {
                 document.getElementById('errorMessage').style.display = 'block';
             }
@@ -179,29 +165,18 @@
 
         function loadPrices() {
             const priceList = document.getElementById('priceList');
-            const status = document.getElementById('status');
             database.ref('prices').once('value', snapshot => {
                 priceList.innerHTML = '';
-                const summary = {};
-
                 snapshot.forEach(childSnapshot => {
                     const data = childSnapshot.val();
-
-                    // Populate the summary object
-                    if (data.category in summary) {
-                        summary[data.category]++;
-                    } else {
-                        summary[data.category] = 1;
-                    }
-
                     priceList.innerHTML += `
                         <tr>
                             <td>${data.category}</td>
                             <td>${data.model}</td>
                             <td>${data.supplier}</td>
                             <td>${Number(data.price).toLocaleString('vi-VN')} đ</td>
-                            <td>${formatDate(data.priceDate)}</td>
-                            <td>${formatDate(data.timestamp)}</td>
+                            <td>${data.priceDate || '-'}</td>
+                            <td>${data.timestamp}</td>
                             <td>
                                 <button onclick="editPrice('${data.model}')">Sửa</button>
                                 <button onclick="deletePrice('${data.model}')">Xóa</button>
@@ -209,16 +184,9 @@
                         </tr>
                     `;
                 });
-
-                // Update the status
-                status.textContent = `Tổng kết: ${Object.entries(summary).map(([key, value]) => `${key}: ${value}`).join(', ')}`;
             });
         }
-    function updateStatusSummary(data) {
-        const summary = calculateSummary(data); // Hàm tính toán số lượng từng loại kết quả
-        const summaryText = `Tổng kết: ${summary}`;
-        document.getElementById('statusSummary').innerText = summaryText;
-    }
+
         function addOrUpdatePrice() {
             const model = document.getElementById('model').value;
             const data = {
@@ -227,18 +195,9 @@
                 supplier: document.getElementById('supplier').value,
                 price: document.getElementById('price').value.replace(/\D/g, ''),
                 priceDate: document.getElementById('priceDate').value,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toLocaleString()
             };
             database.ref('prices/' + model).set(data).then(() => loadPrices());
-        }
-
-        function formatDate(date) {
-            if (!date) return '-';
-            const d = new Date(date);
-            const day = (`0${d.getDate()}`).slice(-2);
-            const month = (`0${d.getMonth() + 1}`).slice(-2);
-            const year = d.getFullYear();
-            return `${day}/${month}/${year}`;
         }
 
         function logout() {
@@ -251,7 +210,6 @@
                 document.getElementById('login').style.display = 'none';
                 document.querySelector('main').style.display = 'block';
                 loadPrices();
-                setInterval(loadPrices, 5000); // Tự động tải dữ liệu mỗi 5 giây
             }
         });
     </script>
