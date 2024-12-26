@@ -155,7 +155,7 @@
         <button onclick="logout()">Đăng xuất</button>
     </main>
 
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK v8 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script>
@@ -185,27 +185,25 @@
         }
 
         function formatDate(dateString, format) {
-            if (!dateString) return '-';
+            if (!dateString) return '';
             const date = new Date(dateString);
-            if (isNaN(date.getTime())) return '-';
+            if (isNaN(date)) return '';
 
-            if (format === 'date') {
-                return date.toLocaleDateString('vi-VN', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit'
-                });
-            } else if (format === 'datetime') {
-                return date.toLocaleString('vi-VN', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: false
-                });
-            }
+            const optionsDate = { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Ho_Chi_Minh' };
+            const optionsDatetime = {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false,
+                timeZone: 'Asia/Ho_Chi_Minh'
+            };
+
+            return format === 'date'
+                ? new Intl.DateTimeFormat('vi-VN', optionsDate).format(date)
+                : new Intl.DateTimeFormat('vi-VN', optionsDatetime).format(date);
         }
 
         function loadPrices() {
@@ -214,15 +212,15 @@
                 const prices = [];
                 snapshot.forEach(childSnapshot => {
                     const data = childSnapshot.val();
-                    if (data) {
-                        prices.push(data);
-                    }
+                    prices.push(data);
                 });
 
+                // Sắp xếp theo ngày nhập giá giảm dần, sau đó theo loại xe (Honda trước, Yamaha sau)
                 prices.sort((a, b) => {
-                    if (a.category === b.category) {
-                        return new Date(b.timestamp) - new Date(a.timestamp);
-                    }
+                    const dateA = new Date(a.priceDate);
+                    const dateB = new Date(b.priceDate);
+                    if (dateA > dateB) return -1;
+                    if (dateA < dateB) return 1;
                     return a.category === 'Honda' ? -1 : 1;
                 });
 
@@ -232,7 +230,7 @@
                         <tr>
                             <td>${data.category}</td>
                             <td>${data.model}</td>
-                            <td>${data.supplier || '-'}</td>
+                            <td>${data.supplier}</td>
                             <td>${Number(data.price).toLocaleString('vi-VN')} đ</td>
                             <td>${formatDate(data.priceDate, 'date')}</td>
                             <td>${formatDate(data.timestamp, 'datetime')}</td>
@@ -246,6 +244,54 @@
             });
         }
 
+        function applyFilters() {
+            const filterCategory = document.getElementById('filterCategory').value.toLowerCase();
+            const filterModel = document.getElementById('filterModel').value.toLowerCase();
+            const filterSupplier = document.getElementById('filterSupplier').value.toLowerCase();
+
+            const rows = document.querySelectorAll('#priceList tr');
+            rows.forEach(row => {
+                const category = row.cells[0].innerText.toLowerCase();
+                const model = row.cells[1].innerText.toLowerCase();
+                const supplier = row.cells[2].innerText.toLowerCase();
+
+                if (
+                    (!filterCategory || category.includes(filterCategory)) &&
+                    (!filterModel || model.includes(filterModel)) &&
+                    (!filterSupplier || supplier.includes(filterSupplier))
+                ) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        function clearFilters() {
+            document.getElementById('filterCategory').value = '';
+            document.getElementById('filterModel').value = '';
+            document.getElementById('filterSupplier').value = '';
+            applyFilters();
+        }
+
+        function addOrUpdatePrice() {
+            const model = document.getElementById('model').value;
+            const data = {
+                category: document.getElementById('category').value,
+                model,
+                supplier: document.getElementById('supplier').value,
+                price: document.getElementById('price').value.replace(/\D/g, ''),
+                priceDate: document.getElementById('priceDate').value,
+                timestamp: new Date().toISOString()
+            };
+            database.ref('prices/' + model).set(data).then(() => loadPrices());
+        }
+
+        function logout() {
+            localStorage.removeItem('loggedIn');
+            window.location.reload();
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem('loggedIn') === 'true') {
                 document.getElementById('login').style.display = 'none';
@@ -253,11 +299,6 @@
                 loadPrices();
             }
         });
-
-        function logout() {
-            localStorage.removeItem('loggedIn');
-            window.location.reload();
-        }
     </script>
 </body>
 </html>
