@@ -188,6 +188,29 @@
             }
         }
 
+        function formatDate(date, format) {
+            const options = {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false,
+                timeZone: 'Asia/Ho_Chi_Minh'
+            };
+
+            if (format === 'date') {
+                return new Intl.DateTimeFormat('vi-VN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                }).format(new Date(date));
+            } else if (format === 'datetime') {
+                return new Intl.DateTimeFormat('vi-VN', options).format(new Date(date));
+            }
+        }
+
         function loadPrices() {
             const priceList = document.getElementById('priceList');
             database.ref('prices').once('value', snapshot => {
@@ -196,9 +219,14 @@
                     const data = childSnapshot.val();
                     prices.push(data);
                 });
-                
-                // Sắp xếp theo thời gian cập nhật gần nhất
-                prices.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                // Sắp xếp theo loại xe (Honda trước, Yamaha sau), sau đó sắp xếp theo thời gian cập nhật gần nhất
+                prices.sort((a, b) => {
+                    if (a.category === b.category) {
+                        return new Date(b.timestamp) - new Date(a.timestamp);
+                    }
+                    return a.category === 'Honda' ? -1 : 1;
+                });
 
                 priceList.innerHTML = '';
                 prices.forEach(data => {
@@ -208,8 +236,8 @@
                             <td>${data.model}</td>
                             <td>${data.supplier}</td>
                             <td>${Number(data.price).toLocaleString('vi-VN')} đ</td>
-                            <td>${data.priceDate || '-'}</td>
-                            <td>${data.timestamp}</td>
+                            <td>${formatDate(data.priceDate, 'date')}</td>
+                            <td>${formatDate(data.timestamp, 'datetime')}</td>
                             <td>
                                 <button onclick="editPrice('${data.model}')">Sửa</button>
                                 <button onclick="deletePrice('${data.model}')">Xóa</button>
@@ -258,7 +286,7 @@
                 supplier: document.getElementById('supplier').value,
                 price: document.getElementById('price').value.replace(/\D/g, ''),
                 priceDate: document.getElementById('priceDate').value,
-                timestamp: new Date().toLocaleString()
+                timestamp: new Date().toISOString()
             };
             database.ref('prices/' + model).set(data).then(() => loadPrices());
         }
