@@ -42,6 +42,13 @@
         th {
             background-color: #003580;
             color: white;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        th.filter-header {
+            border-bottom: 3px solid red;
         }
 
         .form-section, .filter-section {
@@ -77,6 +84,11 @@
             width: 100%;
             margin-bottom: 10px;
             padding: 10px;
+        }
+
+        .filter-input {
+            padding: 5px;
+            margin: 5px 0;
         }
     </style>
 </head>
@@ -114,6 +126,19 @@
             <label>Ngày nhập giá:</label>
             <input type="date" id="priceDate" required>
             <button onclick="addOrUpdatePrice()">Xác nhận</button>
+        </div>
+
+        <!-- Bộ lọc -->
+        <div class="filter-section">
+            <h2>Lọc Danh Sách</h2>
+            <label>Loại xe:</label>
+            <input type="text" id="filterCategory" class="filter-input" placeholder="Tìm loại xe">
+            <label>Mẫu xe:</label>
+            <input type="text" id="filterModel" class="filter-input" placeholder="Tìm mẫu xe">
+            <label>Nhà cung cấp:</label>
+            <input type="text" id="filterSupplier" class="filter-input" placeholder="Tìm nhà cung cấp">
+            <button onclick="applyFilters()">Lọc</button>
+            <button onclick="clearFilters()">Xóa bộ lọc</button>
         </div>
 
         <h2>Danh sách giá</h2>
@@ -166,9 +191,17 @@
         function loadPrices() {
             const priceList = document.getElementById('priceList');
             database.ref('prices').once('value', snapshot => {
-                priceList.innerHTML = '';
+                const prices = [];
                 snapshot.forEach(childSnapshot => {
                     const data = childSnapshot.val();
+                    prices.push(data);
+                });
+                
+                // Sắp xếp theo thời gian cập nhật gần nhất
+                prices.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                priceList.innerHTML = '';
+                prices.forEach(data => {
                     priceList.innerHTML += `
                         <tr>
                             <td>${data.category}</td>
@@ -185,6 +218,36 @@
                     `;
                 });
             });
+        }
+
+        function applyFilters() {
+            const filterCategory = document.getElementById('filterCategory').value.toLowerCase();
+            const filterModel = document.getElementById('filterModel').value.toLowerCase();
+            const filterSupplier = document.getElementById('filterSupplier').value.toLowerCase();
+
+            const rows = document.querySelectorAll('#priceList tr');
+            rows.forEach(row => {
+                const category = row.cells[0].innerText.toLowerCase();
+                const model = row.cells[1].innerText.toLowerCase();
+                const supplier = row.cells[2].innerText.toLowerCase();
+
+                if (
+                    (!filterCategory || category.includes(filterCategory)) &&
+                    (!filterModel || model.includes(filterModel)) &&
+                    (!filterSupplier || supplier.includes(filterSupplier))
+                ) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        function clearFilters() {
+            document.getElementById('filterCategory').value = '';
+            document.getElementById('filterModel').value = '';
+            document.getElementById('filterSupplier').value = '';
+            applyFilters();
         }
 
         function addOrUpdatePrice() {
