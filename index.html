@@ -47,10 +47,6 @@
             z-index: 2;
         }
 
-        th.filter-header {
-            border-bottom: 3px solid red;
-        }
-
         .form-section, .filter-section {
             background: #fff;
             padding: 15px;
@@ -188,7 +184,11 @@
             }
         }
 
-        function formatDate(date, format) {
+        function formatDate(dateString, format) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            if (isNaN(date)) return '';
+
             const options = {
                 year: 'numeric',
                 month: '2-digit',
@@ -205,9 +205,9 @@
                     year: 'numeric',
                     month: '2-digit',
                     day: '2-digit'
-                }).format(new Date(date));
+                }).format(date);
             } else if (format === 'datetime') {
-                return new Intl.DateTimeFormat('vi-VN', options).format(new Date(date));
+                return new Intl.DateTimeFormat('vi-VN', options).format(date);
             }
         }
 
